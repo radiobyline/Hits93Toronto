@@ -50,6 +50,39 @@ export function RecentPage(): JSX.Element {
     return [...tracks].sort((a, b) => b.startMs - a.startMs);
   }, [tracks]);
 
+  const startOfToday = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now.getTime();
+  }, []);
+
+  const groupedByDate = useMemo(() => {
+    const rows: Array<{ type: "heading"; label: string } | { type: "track"; track: Track }> = [];
+    let lastDayKey = "";
+
+    for (const track of sortedTracks) {
+      const date = new Date(track.startMs);
+      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+      if (dayKey !== lastDayKey) {
+        if (track.startMs < startOfToday) {
+          const label = date.toLocaleDateString([], {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+          });
+          rows.push({ type: "heading", label });
+        }
+        lastDayKey = dayKey;
+      }
+
+      rows.push({ type: "track", track });
+    }
+
+    return rows;
+  }, [sortedTracks, startOfToday]);
+
   return (
     <div className="container">
       <section className="page-section">
@@ -62,16 +95,27 @@ export function RecentPage(): JSX.Element {
         {loading && !hasResults && <p className="status-inline">Loading recent tracks...</p>}
 
         <div className="recent-list">
-          {sortedTracks.map((track) => (
-            <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
-              <img src={track.artworkUrl} alt={`${track.title} artwork`} loading="lazy" />
-              <div>
-                <h3>{track.title}</h3>
-                <p>{track.artist}</p>
-                <p className="recent-list__time">{formatClock(track.startMs)}</p>
-              </div>
-            </article>
-          ))}
+          {groupedByDate.map((row, index) => {
+            if (row.type === "heading") {
+              return (
+                <div className="recent-list__day" key={`day-${row.label}-${index}`}>
+                  {row.label}
+                </div>
+              );
+            }
+
+            const showTime = row.track.startMs >= startOfToday;
+            return (
+              <article className="recent-list__item" key={`${row.track.key}-${row.track.startMs}`}>
+                <img src={row.track.artworkUrl} alt={`${row.track.title} artwork`} loading="lazy" />
+                <div>
+                  <h3>{row.track.title}</h3>
+                  <p>{row.track.artist}</p>
+                  {showTime && <p className="recent-list__time">{formatClock(row.track.startMs)}</p>}
+                </div>
+              </article>
+            );
+          })}
 
           {!loading && !hasResults && <p className="status-inline">No history returned yet.</p>}
         </div>

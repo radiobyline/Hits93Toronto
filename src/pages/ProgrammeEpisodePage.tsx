@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { DEFAULT_ARTWORK_URL, SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
@@ -17,6 +18,10 @@ interface EpisodeViewState {
   episode: Programme | null;
   archive: Programme[];
   tracks: Track[];
+}
+
+interface EpisodeRouteState {
+  episode?: Programme;
 }
 
 function formatProgrammeDate(ms: number): string {
@@ -44,6 +49,7 @@ function dedupeProgrammes(items: Programme[]): Programme[] {
 
 export function ProgrammeEpisodePage(): JSX.Element {
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -56,6 +62,29 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const parsedDate = useMemo(() => parseIsoDateLocal(params.dateIso ?? ""), [params.dateIso]);
   const parsedStartMs = useMemo(() => Number(params.startMs), [params.startMs]);
   const requestedSlug = useMemo(() => resolveProgrammeSlug(params.slug ?? ""), [params.slug]);
+  const routeState = (location.state as EpisodeRouteState | null) ?? null;
+
+  const initialEpisodeFromState = useMemo(() => {
+    if (!routeState?.episode) {
+      return null;
+    }
+
+    const stateEpisode = routeState.episode;
+    if (!Number.isFinite(parsedStartMs)) {
+      return stateEpisode;
+    }
+
+    return stateEpisode.startMs === parsedStartMs ? stateEpisode : null;
+  }, [routeState, parsedStartMs]);
+
+  const isCurrentEpisode = useMemo(() => {
+    if (!state.episode) {
+      return false;
+    }
+
+    const now = Date.now();
+    return state.episode.startMs <= now && now < state.episode.endMs;
+  }, [state.episode]);
 
   useEffect(() => {
     const load = async () => {
@@ -74,6 +103,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
       setLoading(true);
       setHistoryError(null);
       try {
+        let matchedEpisode = initialEpisodeFromState;
         const days = Array.from({ length: SCHEDULE_EPISODE_LOOKBACK_DAYS + 1 }, (_, index) =>
           shiftLocalDays(parsedDate, -index)
         );
@@ -91,11 +121,16 @@ export function ProgrammeEpisodePage(): JSX.Element {
         const selectedDayItems = results[0] ?? [];
         const allItems = dedupeProgrammes(results.flat()).sort((a, b) => b.startMs - a.startMs);
 
-        const matchedEpisode =
-          selectedDayItems.find((item) => item.startMs === parsedStartMs && item.slug === requestedSlug) ??
-          selectedDayItems.find((item) => item.startMs === parsedStartMs) ??
-          allItems.find((item) => item.startMs === parsedStartMs && item.slug === requestedSlug) ??
-          null;
+        if (!matchedEpisode) {
+          matchedEpisode =
+            selectedDayItems.find(
+              (item) => item.startMs === parsedStartMs && item.slug === requestedSlug
+            ) ??
+            selectedDayItems.find((item) => item.startMs === parsedStartMs) ??
+            allItems.find((item) => item.startMs === parsedStartMs && item.slug === requestedSlug) ??
+            allItems.find((item) => item.startMs === parsedStartMs) ??
+            null;
+        }
 
         if (!matchedEpisode) {
           setState({ episode: null, archive: [], tracks: [] });
@@ -108,7 +143,15 @@ export function ProgrammeEpisodePage(): JSX.Element {
         let tracks: Track[] = [];
 
         try {
-          tracks = await fetchHistoryForWindow(matchedEpisode.startMs, matchedEpisode.endMs);
+          const archivedTracks = await fetchEpisodeArchiveTracks(
+            formatIsoDateLocal(new Date(matchedEpisode.startMs)),
+            matchedEpisode.startMs,
+            matchedEpisode.slug
+          );
+          tracks =
+            archivedTracks !== null
+              ? archivedTracks
+              : await fetchHistoryForWindow(matchedEpisode.startMs, matchedEpisode.endMs);
         } catch (historyRequestError) {
           setHistoryError(
             historyRequestError instanceof Error
@@ -131,9 +174,28 @@ export function ProgrammeEpisodePage(): JSX.Element {
     };
 
     void load();
-  }, [parsedDate, parsedStartMs, requestedSlug]);
+  }, [parsedDate, parsedStartMs, requestedSlug, initialEpisodeFromState]);
 
   const selectedDateIso = parsedDate ? formatIsoDateLocal(parsedDate) : formatIsoDateLocal(new Date());
+
+  const renderTrackTimeLabel = (track: Track): string | null => {
+    if (isCurrentEpisode) {
+      const deltaMs = Date.now() - track.startMs;
+      if (deltaMs <= 60 * 1000) {
+        return "Just now";
+      }
+
+      const minutes = Math.max(1, Math.floor(deltaMs / (60 * 1000)));
+      return `${minutes} min ago`;
+    }
+
+    const ageMs = Date.now() - track.startMs;
+    if (ageMs <= 24 * 60 * 60 * 1000) {
+      return formatClock(track.startMs);
+    }
+
+    return null;
+  };
 
   return (
     <div className="container">
@@ -206,7 +268,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
                           {formatClock(item.startMs)} to {formatClock(item.endMs)}
                         </p>
                       </div>
-                      <Link to={`/schedule/programme/${itemDateIso}/${item.startMs}/${item.slug}`}>
+                      <Link
+                        to={`/schedule/programme/${itemDateIso}/${item.startMs}/${item.slug}`}
+                        state={{ episode: item }}
+                      >
                         Open episode
                       </Link>
                     </article>
@@ -222,23 +287,26 @@ export function ProgrammeEpisodePage(): JSX.Element {
               {historyError && <p className="status-inline status-inline--error">{historyError}</p>}
 
               <div className="recent-list">
-                {state.tracks.map((track) => (
-                  <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
-                    <img
-                      src={track.artworkUrl}
-                      alt={`${track.title} artwork`}
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.src = DEFAULT_ARTWORK_URL;
-                      }}
-                    />
-                    <div>
-                      <h4>{track.title}</h4>
-                      <p>{track.artist}</p>
-                      <p className="recent-list__time">{formatClock(track.startMs)}</p>
-                    </div>
-                  </article>
-                ))}
+                {state.tracks.map((track) => {
+                  const timeLabel = renderTrackTimeLabel(track);
+                  return (
+                    <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
+                      <img
+                        src={track.artworkUrl}
+                        alt={`${track.title} artwork`}
+                        loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                        }}
+                      />
+                      <div>
+                        <h4>{track.title}</h4>
+                        <p>{track.artist}</p>
+                        {timeLabel && <p className="recent-list__time">{timeLabel}</p>}
+                      </div>
+                    </article>
+                  );
+                })}
 
                 {!state.tracks.length && (
                   <p className="status-inline">

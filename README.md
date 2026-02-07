@@ -19,12 +19,14 @@ Edit `/src/config/constants.ts`:
 - `DEFAULT_ARTWORK_URL`
 - `POLL_INTERVAL_MS`
 - `OPTIONAL_WORKER_PROXY_URL`
+- `OPTIONAL_EPISODE_ARCHIVE_URL` (Cloudflare Worker archive base URL)
 
 ## Routes
 
 - `/#/` Home live player
 - `/#/recent` Full recently played (load more)
 - `/#/schedule` Schedule page (grid endpoint + local fallback provider)
+- `/#/schedule/programme/:dateIso/:startMs/:slug` Programme episode page (details + episode tracks + archive)
 - `/#/about` CMS-driven page (`/public/content/about.json`)
 - `/#/contact` CMS-driven page (`/public/content/contact.json`)
 - `/#/jukebox` Placeholder
@@ -111,6 +113,23 @@ export default {
 Worker route usage example:
 
 - `/proxy?path=/history/&limit=8&offset=0&server=1`
+
+## Episode Archive Worker (optional backup)
+
+Purpose: store programme episode song history JSON pages in Cloudflare KV as a backup layer.
+
+- Worker scaffold is included at:
+  - `/workers/episode-archive-worker`
+- Example endpoints:
+  - `GET /v1/episodes/{slug}/{dateIso}/{startMs}.json`
+  - `GET /v1/programmes/{slug}.json`
+  - `POST /v1/rebuild?days=14`
+
+To enable in frontend, set:
+
+- `OPTIONAL_EPISODE_ARCHIVE_URL = "https://your-worker-domain"`
+
+If unset, programme episode pages pull song history directly from Streaming Center.
 
 ## CMS Content (GitHub Pages-friendly)
 

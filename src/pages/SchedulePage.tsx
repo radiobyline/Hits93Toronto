@@ -168,6 +168,7 @@ export function SchedulePage(): JSX.Element {
 
               <Link
                 to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
+                state={{ episode: item }}
                 className="schedule-list__art-link"
                 aria-label={`Open ${item.name} episode page`}
               >
@@ -184,13 +185,17 @@ export function SchedulePage(): JSX.Element {
 
               <div className="schedule-list__meta">
                 <h3>
-                  <Link to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}>
+                  <Link
+                    to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
+                    state={{ episode: item }}
+                  >
                     {item.name}
                   </Link>
                 </h3>
                 <p>{item.description}</p>
                 <Link
                   to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
+                  state={{ episode: item }}
                   className="schedule-list__episode-link"
                 >
                   Open episode page

@@ -6,7 +6,8 @@ export const STREAM_URL_HTTP = "http://hits93toronto.com:2950/stream";
 export const SERVER_ID = 1;
 export const DEFAULT_ARTWORK_URL = resolvePublicAssetUrl("default-artwork.svg");
 export const POLL_INTERVAL_MS = 12000;
-export const OPTIONAL_WORKER_PROXY_URL = "";
+export const OPTIONAL_WORKER_PROXY_URL: string = "";
+export const OPTIONAL_EPISODE_ARCHIVE_URL: string = "";
 
 export const HISTORY_PAGE_SIZE = 50;
 export const HOME_RECENT_CARD_COUNT = 5;

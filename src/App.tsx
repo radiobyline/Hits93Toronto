@@ -21,6 +21,11 @@ export default function App(): JSX.Element {
           path="schedule/programme/:dateIso/:startMs/:slug"
           element={<ProgrammeEpisodePage />}
         />
+        <Route path="schedule/programme/:dateIso/:startMs" element={<ProgrammeEpisodePage />} />
+        <Route
+          path="schedule/programme/:dateIso/:startMs/:slug/*"
+          element={<ProgrammeEpisodePage />}
+        />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route
