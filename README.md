@@ -141,3 +141,4 @@ Worker route usage example:
 - Schedule provider reads `/grid/` using dynamic Unix windows and falls back to local schedule if unavailable.
 - Audio starts only via user action to satisfy autoplay restrictions.
 - Visualizer uses Web Audio API analyser connected after user-triggered playback.
+# Hits93Toronto
