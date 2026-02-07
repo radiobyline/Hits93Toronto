@@ -51,12 +51,8 @@ export async function fetchHistory(limit: number, offset: number): Promise<Track
   return sortTracksByStartDesc(tracks);
 }
 
-function trackOverlapsWindow(track: Track, windowStartMs: number, windowEndMs: number): boolean {
-  const inferredEndMs =
-    track.endMs ??
-    (track.lengthMs > 0 ? track.startMs + track.lengthMs : track.startMs + 60 * 1000);
-
-  return track.startMs < windowEndMs && inferredEndMs > windowStartMs;
+function trackStartsInWindow(track: Track, windowStartMs: number, windowEndMs: number): boolean {
+  return track.startMs >= windowStartMs && track.startMs < windowEndMs;
 }
 
 export async function fetchHistoryForWindow(windowStartMs: number, windowEndMs: number): Promise<Track[]> {
@@ -69,11 +65,11 @@ export async function fetchHistoryForWindow(windowStartMs: number, windowEndMs: 
       break;
     }
 
-    const overlaps = page.filter((track) => trackOverlapsWindow(track, windowStartMs, windowEndMs));
-    collected.push(...overlaps);
+    const inWindow = page.filter((track) => trackStartsInWindow(track, windowStartMs, windowEndMs));
+    collected.push(...inWindow);
 
     const newestStartMs = page[0]?.startMs ?? 0;
-    if (newestStartMs < windowStartMs && overlaps.length === 0) {
+    if (newestStartMs < windowStartMs && inWindow.length === 0) {
       break;
     }
 

@@ -180,12 +180,9 @@ function normalizeHistoryTrack(raw: RawHistoryTrack): RawHistoryTrack | null {
   };
 }
 
-function trackOverlapsWindow(track: RawHistoryTrack, startMs: number, endMs: number): boolean {
+function trackStartsInWindow(track: RawHistoryTrack, startMs: number, endMs: number): boolean {
   const trackStart = Number(track.ts);
-  const lengthMs = Number(track.length) || 0;
-  const trackEnd = lengthMs > 0 ? trackStart + lengthMs : trackStart + 60 * 1000;
-
-  return trackStart < endMs && trackEnd > startMs;
+  return trackStart >= startMs && trackStart < endMs;
 }
 
 function makeEpisodeKey(slug: string, dateIso: string, startMs: number): string {
@@ -233,11 +230,11 @@ async function fetchTracksForWindow(env: Env, startMs: number, endMs: number): P
       .filter((track): track is RawHistoryTrack => Boolean(track))
       .sort((a, b) => Number(b.ts) - Number(a.ts));
 
-    const overlaps = normalized.filter((track) => trackOverlapsWindow(track, startMs, endMs));
-    collected.push(...overlaps);
+    const inWindow = normalized.filter((track) => trackStartsInWindow(track, startMs, endMs));
+    collected.push(...inWindow);
 
     const oldestInPage = Number(normalized[normalized.length - 1]?.ts || 0);
-    if (oldestInPage > 0 && oldestInPage < startMs && overlaps.length === 0) {
+    if (oldestInPage > 0 && oldestInPage < startMs && inWindow.length === 0) {
       break;
     }
 
@@ -272,8 +269,8 @@ async function fetchHistoryInRange(env: Env, rangeStartMs: number, rangeEndMs: n
       .filter((track): track is RawHistoryTrack => Boolean(track))
       .sort((a, b) => Number(b.ts) - Number(a.ts));
 
-    const overlaps = normalized.filter((track) => trackOverlapsWindow(track, rangeStartMs, rangeEndMs));
-    collected.push(...overlaps);
+    const inRange = normalized.filter((track) => trackStartsInWindow(track, rangeStartMs, rangeEndMs));
+    collected.push(...inRange);
 
     const oldestInPage = Number(normalized[normalized.length - 1]?.ts || 0);
     if (oldestInPage > 0 && oldestInPage < rangeStartMs) {
@@ -409,7 +406,14 @@ async function handleEpisodeRequest(request: Request, env: Env): Promise<Respons
   const cached = await env.EPISODE_ARCHIVE.get(key, "json");
   if (cached && typeof cached === "object") {
     const record = cached as EpisodeArchiveRecord;
-    return jsonResponse({ ...record, source: "worker-cache" });
+    const sanitizedRecord: EpisodeArchiveRecord = {
+      ...record,
+      tracks: (record.tracks || []).filter((track) =>
+        trackStartsInWindow(track, record.episode.startMs, record.episode.endMs)
+      )
+    };
+
+    return jsonResponse({ ...sanitizedRecord, source: "worker-cache" });
   }
 
   const built = await buildEpisodeArchiveRecord(env, parsed.slug, parsed.dateIso, parsed.startMs);
@@ -466,15 +470,7 @@ async function rebuildRecentEpisodes(env: Env, days: number): Promise<{ stored: 
 
   let stored = 0;
   for (const item of programmeItems) {
-    const key = makeEpisodeKey(item.slug, item.dateIso, item.startMs);
-    const exists = await env.EPISODE_ARCHIVE.get(key);
-    if (exists) {
-      continue;
-    }
-
-    const tracks = rangeTracks.filter((track) =>
-      trackOverlapsWindow(track, item.startMs, item.endMs)
-    );
+    const tracks = rangeTracks.filter((track) => trackStartsInWindow(track, item.startMs, item.endMs));
     const record: EpisodeArchiveRecord = {
       episode: {
         key: `${item.slug}:${item.startMs}`,
