@@ -20,9 +20,7 @@ const NAV_ITEMS = [
 
 export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const isDark = theme === "dark";
-  const logoSrc = isDark
-    ? resolvePublicAssetUrl("branding/hits93-dark.svg")
-    : resolvePublicAssetUrl("branding/hits93-light.svg");
+  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.svg");
 
   return (
     <header className="site-header">
