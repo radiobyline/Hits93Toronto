@@ -71,18 +71,20 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
         }}
       >
         <header className="modal__header">
-          <h2 id="request-modal-title">Request a track</h2>
+          <h2 id="request-modal-title">Request a Song</h2>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Close request form">
             Close
           </button>
         </header>
 
+        <p className="status-inline">Search and request songs.</p>
+
         <label className="field" htmlFor="request-search">
-          <span>Search library</span>
+          <span>Search</span>
           <input
             id="request-search"
             type="search"
-            placeholder="Search by artist, title, album"
+            placeholder="Artist, song, or album"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -92,7 +94,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
 
         <div className="request-results" role="listbox" aria-label="Track results">
           {searching && <p className="status-inline">Searching...</p>}
-          {!searching && !results.length && <p className="status-inline">No matches in mock data.</p>}
+          {!searching && !results.length && <p className="status-inline">No matching tracks found.</p>}
 
           {results.map((track) => (
             <button
@@ -109,12 +111,22 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
           ))}
         </div>
 
+        <label className="field" htmlFor="request-track">
+          <span>Selected Song</span>
+          <input
+            id="request-track"
+            type="text"
+            value={selectedTrack ? `${selectedTrack.artist} - ${selectedTrack.title}` : ""}
+            readOnly
+            placeholder="Choose a song"
+          />
+        </label>
+
         <label className="field" htmlFor="requester-name">
-          <span>Name (optional)</span>
+          <span>Your name (optional)</span>
           <input
             id="requester-name"
             type="text"
-            placeholder="Your name"
             value={requesterName}
             onChange={(event) => {
               setRequesterName(event.target.value);
@@ -123,11 +135,11 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
         </label>
 
         <label className="field" htmlFor="request-message">
-          <span>Shoutout message (optional)</span>
+          <span>Shoutout (optional)</span>
           <textarea
             id="request-message"
             rows={3}
-            placeholder="Message for on-air shoutout"
+            placeholder="Add a message"
             value={message}
             onChange={(event) => {
               setMessage(event.target.value);
@@ -142,7 +154,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
             disabled={!selectedTrack || submitting}
             onClick={() => {
               if (!selectedTrack) {
-                setStatus("Select a track first.");
+                setStatus("Choose a song first.");
                 return;
               }
 
@@ -165,10 +177,11 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
                 });
             }}
           >
-            {submitting ? "Submitting..." : "Send request"}
+            {submitting ? "Sending request..." : "Send Request"}
           </button>
           <p className="status-inline">{status}</p>
         </footer>
+        <p className="status-inline">Requests may play later in the day.</p>
       </div>
     </div>
   );

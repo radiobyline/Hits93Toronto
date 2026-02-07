@@ -153,3 +153,80 @@ export function RequestIcon(props: IconProps): JSX.Element {
     </IconBase>
   );
 }
+
+export function MenuIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </IconBase>
+  );
+}
+
+export function CloseIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </IconBase>
+  );
+}
+
+export function XBrandIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <path d="M6 5h3.4l3.1 4.4L16.4 5H19l-5.2 6.1L19.5 19h-3.3l-3.6-5-4.3 5H5.7l5.8-6.8z" fill="currentColor" />
+    </IconBase>
+  );
+}
+
+export function InstagramIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="16.7" cy="7.3" r="1.2" fill="currentColor" />
+    </IconBase>
+  );
+}
+
+export function FacebookIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <path
+        d="M13.5 8.5V6.9c0-.8.5-1.3 1.4-1.3h2V3h-2.4c-2.6 0-4.1 1.5-4.1 4.2v1.3H8v2.9h2.4V21h3.1v-9.6H16l.4-2.9z"
+        fill="currentColor"
+      />
+    </IconBase>
+  );
+}
+
+export function YouTubeIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <rect x="3.2" y="6.3" width="17.6" height="11.4" rx="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M11 9.6l4.8 2.4-4.8 2.4z" fill="currentColor" />
+    </IconBase>
+  );
+}
+
+export function LinkedInIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <rect x="4.2" y="4.2" width="15.6" height="15.6" rx="2.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="7.2" y="10.1" width="2.3" height="6.7" rx="0.6" fill="currentColor" />
+      <circle cx="8.4" cy="7.7" r="1.3" fill="currentColor" />
+      <path d="M11.2 10.1h2.2v1c.4-.7 1.3-1.2 2.5-1.2 2 0 2.9 1.2 2.9 3.4v3.5h-2.3V13.7c0-1-.4-1.6-1.3-1.6s-1.7.7-1.7 2v2.7h-2.3z" fill="currentColor" />
+    </IconBase>
+  );
+}
