@@ -593,9 +593,32 @@ a {
   gap: 0.65rem;
 }
 
+.schedule-controls {
+  display: flex;
+  align-items: end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.schedule-controls__date {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.schedule-controls__date input {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text);
+  font: inherit;
+  padding: 0.44rem 0.58rem;
+}
+
 .schedule-list__item {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 180px 104px minmax(0, 1fr);
   gap: 0.8rem;
   padding: 0.75rem;
   border: 1px solid var(--surface-border);
@@ -617,6 +640,131 @@ a {
 .schedule-list__item p {
   margin: 0.2rem 0 0;
   color: var(--text-muted);
+}
+
+.schedule-list__art-link {
+  display: block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.schedule-list__artwork {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface-border);
+}
+
+.schedule-list__meta {
+  display: grid;
+  align-content: start;
+  gap: 0.18rem;
+}
+
+.schedule-list__meta h3 a {
+  text-decoration: none;
+}
+
+.schedule-list__meta h3 a:hover,
+.schedule-list__meta h3 a:focus-visible {
+  text-decoration: underline;
+}
+
+.schedule-list__episode-link {
+  margin-top: 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.programme-episode {
+  gap: 1.1rem;
+}
+
+.programme-episode__top {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.programme-episode__back {
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+}
+
+.programme-episode__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.programme-episode__artwork {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  background: var(--bg-elevated);
+}
+
+.programme-episode__meta {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+}
+
+.programme-episode__kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+}
+
+.programme-episode__facts {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.24rem;
+}
+
+.programme-episode__facts p {
+  margin: 0;
+}
+
+.programme-episode-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.programme-episode-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-strong);
+  padding: 0.7rem;
+}
+
+.programme-episode-list__item h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+}
+
+.programme-episode-list__item p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+}
+
+.programme-episode-list__item a {
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
 }
 
 .placeholder-page {
@@ -840,7 +988,24 @@ a {
   }
 
   .schedule-list__item {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+
+  .schedule-list__times {
+    grid-column: 1 / -1;
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .programme-episode__hero {
     grid-template-columns: 1fr;
+  }
+
+  .programme-episode-list__item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .mini-player {
@@ -864,6 +1029,11 @@ a {
 
   .recent-carousel__track-row {
     grid-auto-columns: minmax(165px, 1fr);
+  }
+
+  .schedule-controls {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .player-controls {

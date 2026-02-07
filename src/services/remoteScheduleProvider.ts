@@ -3,6 +3,7 @@ import {
   SCHEDULE_GRID_LOOKBACK_DAYS,
   SERVER_ID
 } from "../config/constants";
+import { getProgrammeArtworkUrl, resolveProgrammeSlug } from "../utils/programme";
 import { fetchJson } from "./apiClient";
 import type { Programme, ScheduleProvider, ScheduleSnapshot } from "./scheduleProvider";
 
@@ -23,6 +24,8 @@ function toUnixSeconds(date: Date): number {
 function mapGridItemToProgramme(item: GridProgrammeItem): Programme {
   const startSec = Number(item.start_ts) || 0;
   const endSec = Number(item.end_ts) || 0;
+  const name = item.name?.toString() || "Programme";
+  const slug = resolveProgrammeSlug(name);
 
   const detailParts: string[] = [];
   if (item.cast_type) {
@@ -37,10 +40,14 @@ function mapGridItemToProgramme(item: GridProgrammeItem): Programme {
 
   return {
     id: `${item.id ?? "slot"}-${startSec}`,
-    name: item.name?.toString() || "Programme",
+    name,
+    slug,
     description: detailParts.join(" • ") || "Programme slot",
     startMs: startSec * 1000,
-    endMs: endSec * 1000
+    endMs: endSec * 1000,
+    artworkUrl: getProgrammeArtworkUrl(name),
+    timezone: item.timezone,
+    requestsEnabled: Boolean(item.allow_song_requests)
   };
 }
 

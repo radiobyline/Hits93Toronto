@@ -11,6 +11,7 @@ export const HOME_RECENT_CARD_COUNT = 5;
 
 export const SCHEDULE_GRID_LOOKBACK_DAYS = 1;
 export const SCHEDULE_GRID_LOOKAHEAD_DAYS = 7;
+export const SCHEDULE_EPISODE_LOOKBACK_DAYS = 14;
 
 export const REQUEST_PAGE_SIZE = 12;
 export const REQUEST_ORDER = 1;

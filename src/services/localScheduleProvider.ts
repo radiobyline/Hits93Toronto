@@ -1,4 +1,5 @@
 import type { Programme, ScheduleProvider, ScheduleSnapshot } from "./scheduleProvider";
+import { getProgrammeArtworkUrl, resolveProgrammeSlug } from "../utils/programme";
 
 interface DailyProgrammeTemplate {
   id: string;
@@ -6,50 +7,100 @@ interface DailyProgrammeTemplate {
   description: string;
   start: string;
   end: string;
+  requestsEnabled?: boolean;
+  timezone?: string;
 }
 
 const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
-    id: "breakfast-hitlist",
-    name: "Breakfast Hitlist",
-    description: "Fast-paced morning mix with headlines and shoutouts.",
-    start: "06:00",
-    end: "10:00"
-  },
-  {
-    id: "midday-drive",
-    name: "Midday Drive",
-    description: "Toronto chart staples, listener picks, and quick updates.",
-    start: "10:00",
-    end: "14:00"
-  },
-  {
-    id: "afternoon-live",
-    name: "Afternoon Live",
-    description: "Hot releases, throwback blend, and presenter interviews.",
-    start: "14:00",
-    end: "18:00"
-  },
-  {
-    id: "rush-hour",
-    name: "Rush Hour Rewind",
-    description: "Peak-time anthems and back-to-back requests.",
-    start: "18:00",
-    end: "22:00"
-  },
-  {
-    id: "overnight-frequencies",
-    name: "Overnight Frequencies",
-    description: "Non-stop continuous mix through late night.",
-    start: "22:00",
-    end: "23:59"
-  },
-  {
-    id: "after-midnight",
-    name: "After Midnight",
-    description: "Low-key late-night tracks and fresh discoveries.",
+    id: "bassline",
+    name: "Bassline",
+    description: "Deep catalogue and rhythmic pop to start the overnight hours.",
     start: "00:00",
-    end: "06:00"
+    end: "02:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "after-hours",
+    name: "After Hours",
+    description: "Late-night selections, smooth transitions, and low-tempo discoveries.",
+    start: "02:00",
+    end: "05:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "prime-hits-am",
+    name: "Prime Hits",
+    description: "Top recurrent tracks and current chart movers.",
+    start: "05:00",
+    end: "07:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "first-light",
+    name: "First Light",
+    description: "Morning ramp-up with bright pop, throwbacks, and station updates.",
+    start: "07:00",
+    end: "10:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "prime-hits-midday",
+    name: "Prime Hits",
+    description: "High-rotation favorites and listener picks.",
+    start: "10:00",
+    end: "13:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "the-a-list",
+    name: "The A-List",
+    description: "The core daytime stack of biggest records and trending crossovers.",
+    start: "13:00",
+    end: "16:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "good-energy",
+    name: "Good Energy",
+    description: "Afternoon momentum with upbeat tracks and audience interaction.",
+    start: "16:00",
+    end: "19:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "the-drive",
+    name: "The Drive",
+    description: "Drive-time blend of current hits and familiar power songs.",
+    start: "19:00",
+    end: "22:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "next-wave",
+    name: "Next Wave",
+    description: "Fresh adds and breakout tracks on a nighttime clock.",
+    start: "22:00",
+    end: "23:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "low-key",
+    name: "Low Key",
+    description: "Wind-down hour with mellow tempo and atmospheric curation.",
+    start: "23:00",
+    end: "00:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
   }
 ];
 
@@ -61,6 +112,7 @@ function parseTime(time: string): { hours: number; minutes: number } {
 function createProgrammeForDate(template: DailyProgrammeTemplate, date: Date): Programme {
   const startDate = new Date(date);
   const endDate = new Date(date);
+  const slug = resolveProgrammeSlug(template.name);
 
   const { hours: startHours, minutes: startMinutes } = parseTime(template.start);
   const { hours: endHours, minutes: endMinutes } = parseTime(template.end);
@@ -75,9 +127,13 @@ function createProgrammeForDate(template: DailyProgrammeTemplate, date: Date): P
   return {
     id: `${template.id}-${startDate.toISOString().slice(0, 10)}`,
     name: template.name,
+    slug,
     description: template.description,
     startMs: startDate.getTime(),
-    endMs: endDate.getTime()
+    endMs: endDate.getTime(),
+    artworkUrl: getProgrammeArtworkUrl(template.name),
+    timezone: template.timezone,
+    requestsEnabled: template.requestsEnabled
   };
 }
 

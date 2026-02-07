@@ -1,9 +1,13 @@
 export interface Programme {
   id: string;
   name: string;
+  slug: string;
   description: string;
   startMs: number;
   endMs: number;
+  artworkUrl: string;
+  timezone?: string;
+  requestsEnabled?: boolean;
 }
 
 export interface ScheduleSnapshot {
