@@ -33,11 +33,11 @@ function formatDateLabel(dateIso: string, todayStart: Date): string {
   const absoluteLabel = formatAbsoluteDateLabel(parsed);
 
   if (isSameLocalDay(parsed, todayStart)) {
-    return `Today (${absoluteLabel})`;
+    return `Today — ${absoluteLabel}`;
   }
 
   if (isSameLocalDay(parsed, yesterday)) {
-    return `Yesterday (${absoluteLabel})`;
+    return `Yesterday — ${absoluteLabel}`;
   }
 
   return absoluteLabel;
@@ -179,9 +179,9 @@ export function SchedulePage(): JSX.Element {
   return (
     <div className="container">
       <section className="page-section">
-        <h2>Programme schedule</h2>
+        <h2>Program Schedule</h2>
         <p className="page-section__lede">
-          Browse each day, open full episode pages, and jump into dedicated programme pages.
+          Browse each day, open full episode pages, and jump into dedicated program pages.
         </p>
 
         <div className="schedule-controls">
@@ -193,7 +193,7 @@ export function SchedulePage(): JSX.Element {
             }}
             disabled={selectedDateIso <= minDateIso}
           >
-            Previous day
+            Previous Day
           </button>
 
           <label className="schedule-controls__date">
@@ -217,7 +217,7 @@ export function SchedulePage(): JSX.Element {
             }}
             disabled={selectedDateIso >= maxDateIso}
           >
-            Next day
+            Next Day
           </button>
 
           <button
@@ -234,7 +234,7 @@ export function SchedulePage(): JSX.Element {
 
         <p className="status-inline">Showing {formatDateLabel(selectedDateIso, todayStart)}</p>
         {currentProgrammeId && (
-          <p className="status-inline">On-air programme is pinned to the top.</p>
+          <p className="status-inline">The current programme is pinned to the top.</p>
         )}
         {loading && <p className="status-inline">Loading schedule...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
@@ -282,10 +282,10 @@ export function SchedulePage(): JSX.Element {
                   <p>{item.description}</p>
                   <div className="schedule-list__actions">
                     <Link to={episodePath} state={{ episode: item }} className="control-pill control-pill--small">
-                      Open episode page
+                      View Episode
                     </Link>
                     <Link to={programmePath} className="schedule-list__programme-link">
-                      Programme details
+                      Program Page
                     </Link>
                   </div>
                 </div>

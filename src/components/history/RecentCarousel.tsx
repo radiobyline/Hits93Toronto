@@ -11,9 +11,9 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
   return (
     <section className="recent-carousel">
       <div className="section-heading">
-        <h2>Recently played</h2>
+        <h2>Recently Played</h2>
         <Link to="/recent" className="control-pill control-pill--small recent-carousel__see-all">
-          See all history
+          Full History
         </Link>
       </div>
 

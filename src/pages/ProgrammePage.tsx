@@ -45,7 +45,7 @@ export function ProgrammePage(): JSX.Element {
 
   useEffect(() => {
     if (!slug) {
-      setError("Invalid programme slug.");
+      setError("Invalid program slug.");
       setLoading(false);
       return;
     }
@@ -77,7 +77,7 @@ export function ProgrammePage(): JSX.Element {
         setEpisodes(matching);
         setError(null);
       } catch (requestError) {
-        setError(requestError instanceof Error ? requestError.message : "Failed to load programme page.");
+        setError(requestError instanceof Error ? requestError.message : "Failed to load program page.");
       } finally {
         setLoading(false);
       }
@@ -87,19 +87,19 @@ export function ProgrammePage(): JSX.Element {
   }, [slug]);
 
   const programmeName =
-    catalogEntry?.name ?? episodes[0]?.name ?? getProgrammeNameBySlug(slug, "Programme");
+    catalogEntry?.name ?? episodes[0]?.name ?? getProgrammeNameBySlug(slug, "Program");
   const artworkUrl = getProgrammeArtworkUrl(programmeName);
   const longDescription = getProgrammeLongDescriptionBySlug(
     slug,
-    "Programme details are currently unavailable."
+    "Program details are currently unavailable."
   );
 
   return (
     <div className="container">
       <section className="page-section programme-page">
         <div className="programme-page__top">
-          <Link to="/schedule" className="programme-episode__back">
-            Back to schedule
+          <Link to="/schedule" className="programme-episode__back control-pill">
+            Back to Schedule
           </Link>
         </div>
 
@@ -114,22 +114,22 @@ export function ProgrammePage(): JSX.Element {
           />
 
           <div className="programme-page__meta">
-            <p className="programme-episode__kicker">Programme</p>
+            <p className="programme-episode__kicker">Program</p>
             <h2>{programmeName}</h2>
             <p>{longDescription}</p>
             <p className="status-inline">
-              Episodes shown: last {SCHEDULE_EPISODE_LOOKBACK_DAYS} days
+              Episodes from the past {SCHEDULE_EPISODE_LOOKBACK_DAYS} days are shown below.
             </p>
           </div>
         </article>
 
-        {loading && <p className="status-inline">Loading programme episodes...</p>}
+        {loading && <p className="status-inline">Loading program episodes...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
 
         {!loading && !error && (
           <section className="programme-page__episodes">
             <div className="section-heading">
-              <h3>Recent episodes</h3>
+              <h3>Recent Episodes</h3>
             </div>
 
             <div className="programme-episode-list">
@@ -154,14 +154,14 @@ export function ProgrammePage(): JSX.Element {
                       state={{ episode }}
                       className="control-pill control-pill--small"
                     >
-                      Open episode
+                      Open Episode
                     </Link>
                   </article>
                 );
               })}
 
               {!episodes.length && (
-                <p className="status-inline">No recent programme blocks were returned for this show.</p>
+                <p className="status-inline">No recent program blocks were returned for this show.</p>
               )}
             </div>
           </section>

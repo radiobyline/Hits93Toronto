@@ -53,11 +53,16 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 }}
               />
               <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} mode="ring" />
+              <div className="hero-player__strap" aria-hidden="true">
+                <span>
+                  LIVE FROM TORONTO • HITS 93 • LIVE FROM TORONTO • HITS 93 •
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="hero-player__meta">
-            <p className="hero-player__overline">Hits 93 Toronto Live Stream</p>
+            <p className="hero-player__overline">Streaming Worldwide From Toronto</p>
             <LiveIndicator isActive={isPlaying} />
             <h2>{currentTrack?.title ?? "Live from Hits 93 Toronto"}</h2>
             <p className="hero-player__artist">{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
@@ -65,7 +70,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
 
             {currentTrack?.allMusicId && (
               <div className="hero-player__vote-inline">
-                <p>Rate this song</p>
+                <p>Rate</p>
                 <div className="hero-player__vote-inline-buttons">
                   <button
                     type="button"
@@ -117,10 +122,10 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 }}
               >
                 <RequestIcon />
-                <span>Open Jukebox: Request tracks and add shoutouts</span>
+                <span>Request a Song</span>
               </button>
               <Link to="/jukebox" className="control-pill control-pill--small">
-                Open full Jukebox page
+                Open Jukebox
               </Link>
             </div>
 

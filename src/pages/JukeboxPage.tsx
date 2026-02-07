@@ -146,17 +146,17 @@ export function JukeboxPage(): JSX.Element {
       <section className="page-section jukebox-page">
         <h2>Jukebox</h2>
         <p className="page-section__lede">
-          Search the library, request songs, and add a shoutout. Apple preview clips are used where available.
+          Search and request songs.
         </p>
 
         <div className="jukebox-page__layout">
           <section className="jukebox-page__search">
             <label className="field" htmlFor="jukebox-search">
-              <span>Search tracks</span>
+              <span>Search</span>
               <input
                 id="jukebox-search"
                 type="search"
-                placeholder="Search by artist, title, album"
+                placeholder="Artist, song, or album"
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
@@ -164,7 +164,7 @@ export function JukeboxPage(): JSX.Element {
               />
             </label>
 
-            <p className="status-inline">Spotify previews require authenticated partner APIs. Apple previews are used here.</p>
+            <p className="status-inline">Preview clips provided where available.</p>
 
             <div className="jukebox-results" role="list">
               {searching && <p className="status-inline">Searching...</p>}
@@ -210,7 +210,7 @@ export function JukeboxPage(): JSX.Element {
                       ? "Stop preview"
                       : previewLoadingId === track.id
                         ? "Loading preview..."
-                        : "Play 15s preview"}
+                        : "Preview"}
                   </button>
                 </article>
               ))}
@@ -218,18 +218,24 @@ export function JukeboxPage(): JSX.Element {
           </section>
 
           <section className="jukebox-page__request">
-            <h3>Send request</h3>
+            <h3>Request a Song</h3>
             <p className="status-inline">
               Requests are automatic. Shoutouts are accepted now and will expand in future updates.
             </p>
 
             <label className="field" htmlFor="jukebox-track">
-              <span>Selected track</span>
-              <input id="jukebox-track" type="text" value={selectedTrack ? `${selectedTrack.artist} - ${selectedTrack.title}` : ""} readOnly placeholder="Pick a track from search results" />
+              <span>Selected Song</span>
+              <input
+                id="jukebox-track"
+                type="text"
+                value={selectedTrack ? `${selectedTrack.artist} - ${selectedTrack.title}` : ""}
+                readOnly
+                placeholder="Choose a song"
+              />
             </label>
 
             <label className="field" htmlFor="jukebox-name">
-              <span>Name (optional)</span>
+              <span>Your name (optional)</span>
               <input
                 id="jukebox-name"
                 type="text"
@@ -241,10 +247,11 @@ export function JukeboxPage(): JSX.Element {
             </label>
 
             <label className="field" htmlFor="jukebox-message">
-              <span>Shoutout message (optional)</span>
+              <span>Shoutout (optional)</span>
               <textarea
                 id="jukebox-message"
                 rows={4}
+                placeholder="Add a message"
                 value={message}
                 onChange={(event) => {
                   setMessage(event.target.value);
@@ -260,9 +267,10 @@ export function JukeboxPage(): JSX.Element {
               }}
               disabled={submitting || !selectedTrack}
             >
-              {submitting ? "Sending request..." : "Submit request"}
+              {submitting ? "Sending request..." : "Send Request"}
             </button>
 
+            <p className="status-inline">Requests may play later in the day.</p>
             {status && <p className="status-inline">{status}</p>}
           </section>
         </div>

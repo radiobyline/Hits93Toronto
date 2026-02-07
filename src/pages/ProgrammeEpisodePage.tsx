@@ -92,6 +92,13 @@ export function ProgrammeEpisodePage(): JSX.Element {
     return state.episode.startMs <= now && now < state.episode.endMs;
   }, [state.episode]);
 
+  const isFutureEpisode = useMemo(() => {
+    if (!state.episode) {
+      return false;
+    }
+    return Date.now() < state.episode.startMs;
+  }, [state.episode]);
+
   useEffect(() => {
     const load = async () => {
       if (!parsedDate) {
@@ -163,7 +170,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
           setHistoryError(
             historyRequestError instanceof Error
               ? historyRequestError.message
-              : "Unable to load track history for this programme block right now."
+              : "Unable to load track history for this program block right now."
           );
         }
 
@@ -194,15 +201,15 @@ export function ProgrammeEpisodePage(): JSX.Element {
     <div className="container">
       <section className="page-section programme-episode">
         <div className="programme-episode__top">
-          <Link to={`/schedule?date=${selectedDateIso}`} className="programme-episode__back">
-            Back to schedule
+          <Link to={`/schedule?date=${selectedDateIso}`} className="programme-episode__back control-pill">
+            Back to Schedule
           </Link>
-          <Link to={programmePath} className="programme-episode__back">
-            Programme page
+          <Link to={programmePath} className="programme-episode__back control-pill">
+            Program Page
           </Link>
         </div>
 
-        {loading && <p className="status-inline">Loading programme episode...</p>}
+        {loading && <p className="status-inline">Loading program episode...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
 
         {!loading && state.episode && (
@@ -218,7 +225,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
               />
 
               <div className="programme-episode__meta">
-                <p className="programme-episode__kicker">Programme episode</p>
+                <p className="programme-episode__kicker">Program Episode</p>
                 <h2>{state.episode.name}</h2>
                 <p>{getProgrammeLongDescriptionBySlug(state.episode.slug, state.episode.description)}</p>
                 <div className="programme-episode__facts">
@@ -234,7 +241,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
             <section className="programme-episode__history">
               <div className="section-heading">
-                <h3>Tracks played in this episode</h3>
+                <h3>Tracks Played</h3>
               </div>
               {historyError && <p className="status-inline status-inline--error">{historyError}</p>}
 
@@ -262,8 +269,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
                 {!state.tracks.length && (
                   <p className="status-inline">
-                    No track history returned for this block yet. It may be outside currently available
-                    history retention.
+                    {isFutureEpisode
+                      ? "Track information will be available once this episode starts to air."
+                      : "No track history is available for this episode yet."}
                   </p>
                 )}
               </div>
@@ -271,9 +279,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
             <section className="programme-episode__archive">
               <div className="section-heading">
-                <h3>Recent episodes</h3>
-                <Link to={programmePath} className="schedule-list__programme-link">
-                  View all
+                <h3>Recent Episodes</h3>
+                <Link to={programmePath} className="control-pill control-pill--small">
+                  View All
                 </Link>
               </div>
 
@@ -296,14 +304,14 @@ export function ProgrammeEpisodePage(): JSX.Element {
                         state={{ episode: item }}
                         className="control-pill control-pill--small"
                       >
-                        Open episode
+                        Open Episode
                       </Link>
                     </article>
                   );
                 })}
 
                 {!recentEpisodes.length && (
-                  <p className="status-inline">No other recent episodes were found for this programme.</p>
+                  <p className="status-inline">No other recent episodes were found for this program.</p>
                 )}
               </div>
             </section>

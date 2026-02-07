@@ -61,7 +61,7 @@ export function PlayerControls({
         aria-label={isPlaying ? "Pause live stream" : "Play live stream"}
       >
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
-        <span>{isPlaying ? "Pause" : "Play live"}</span>
+        <span>{isPlaying ? "Pause" : "Listen Live"}</span>
       </button>
 
       <button

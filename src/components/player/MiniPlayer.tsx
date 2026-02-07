@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { useTrackVote } from "../../hooks/useTrackVote";
 import { LiveIndicator } from "./LiveIndicator";
@@ -11,12 +10,9 @@ export function MiniPlayer(): JSX.Element {
     togglePlayback,
     isMuted,
     setMuted,
-    volume,
-    setVolume,
     isBuffering
   } = useAudioPlayer();
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
-  const [volumeOpen, setVolumeOpen] = useState(false);
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
@@ -26,7 +22,7 @@ export function MiniPlayer(): JSX.Element {
           <span className="mini-player__station">Hits 93 Toronto</span>
         </div>
         <strong>{currentTrack?.title ?? "Hits 93 Toronto"}</strong>
-        <span>{currentTrack ? `${currentTrack.artist}${currentTrack.album ? ` - ${currentTrack.album}` : ""}` : "Live stream"}</span>
+        <span>{currentTrack ? currentTrack.artist : "Live stream"}</span>
       </div>
 
       <div className="mini-player__controls">
@@ -51,32 +47,6 @@ export function MiniPlayer(): JSX.Element {
         >
           {isMuted ? <MuteIcon /> : <VolumeIcon />}
         </button>
-
-        <div className={`mini-player__volume-wrap ${volumeOpen ? "mini-player__volume-wrap--open" : ""}`}>
-          <button
-            type="button"
-            className="control-pill control-pill--small"
-            aria-label="Open volume slider"
-            onClick={() => {
-              setVolumeOpen((previous) => !previous);
-            }}
-          >
-            <VolumeIcon />
-          </button>
-          <input
-            id="mini-player-volume"
-            className="mini-player__volume"
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(event) => {
-              setVolume(Number(event.target.value));
-            }}
-            aria-label="Mini player volume"
-          />
-        </div>
 
         {canVote && (
           <>
@@ -105,12 +75,14 @@ export function MiniPlayer(): JSX.Element {
           </>
         )}
 
-        {!canVote && currentVote && <span className="mini-player__vote-status">Voted: {currentVote}</span>}
-
-        {isBuffering && <span className="buffering-label">Buffering...</span>}
       </div>
 
-      {voteNote && <p className="mini-player__note">{voteNote}</p>}
+      {(currentVote || voteNote || isBuffering) && (
+        <p className="mini-player__note">
+          {currentVote ? `Voted: ${currentVote}` : voteNote}
+          {isBuffering ? " • Buffering..." : ""}
+        </p>
+      )}
     </aside>
   );
 }

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL, HISTORY_PAGE_SIZE } from "../config/constants";
+import { PlayIcon } from "../components/ui/Icons";
+import { fetchApplePreviewUrl } from "../services/previewService";
 import { fetchHistory } from "../services/historyService";
 import type { Track } from "../types";
 import { formatClock } from "../utils/time";
@@ -19,10 +21,15 @@ function dedupeTracks(tracks: Track[]): Track[] {
 }
 
 export function RecentPage(): JSX.Element {
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<number | undefined>();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewCache, setPreviewCache] = useState<Record<string, string | null>>({});
+  const [previewingKey, setPreviewingKey] = useState<string | null>(null);
+  const [previewLoadingKey, setPreviewLoadingKey] = useState<string | null>(null);
 
   const loadPage = async (nextOffset: number, append: boolean) => {
     setLoading(true);
@@ -44,6 +51,70 @@ export function RecentPage(): JSX.Element {
   useEffect(() => {
     void loadPage(0, false);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewTimeoutRef.current) {
+        window.clearTimeout(previewTimeoutRef.current);
+      }
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
+  const getPreviewKey = (track: Track): string => `${track.key}-${track.startMs}`;
+
+  const stopPreview = () => {
+    if (previewTimeoutRef.current) {
+      window.clearTimeout(previewTimeoutRef.current);
+    }
+    previewAudioRef.current?.pause();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewingKey(null);
+  };
+
+  const startPreview = async (track: Track) => {
+    const trackKey = getPreviewKey(track);
+    stopPreview();
+
+    const cached = previewCache[trackKey];
+    if (cached === undefined) {
+      setPreviewLoadingKey(trackKey);
+      const previewUrl = await fetchApplePreviewUrl(track.artist, track.title);
+      setPreviewCache((previous) => ({
+        ...previous,
+        [trackKey]: previewUrl
+      }));
+      setPreviewLoadingKey(null);
+
+      if (!previewUrl) {
+        return;
+      }
+
+      const audio = new Audio(previewUrl);
+      previewAudioRef.current = audio;
+      setPreviewingKey(trackKey);
+      void audio.play();
+      previewTimeoutRef.current = window.setTimeout(() => {
+        stopPreview();
+      }, 15000);
+      return;
+    }
+
+    if (!cached) {
+      return;
+    }
+
+    const audio = new Audio(cached);
+    previewAudioRef.current = audio;
+    setPreviewingKey(trackKey);
+    void audio.play();
+    previewTimeoutRef.current = window.setTimeout(() => {
+      stopPreview();
+    }, 15000);
+  };
 
   const hasResults = tracks.length > 0;
   const sortedTracks = useMemo(() => {
@@ -86,9 +157,9 @@ export function RecentPage(): JSX.Element {
   return (
     <div className="container">
       <section className="page-section recent-page">
-        <h2>Full recently played history</h2>
+        <h2>Recently Played History</h2>
         <p className="page-section__lede">
-          Pulling Streaming Center history with incremental loading to keep rendering lightweight.
+          A complete list of tracks played on Hits 93 Toronto.
         </p>
 
         {error && <p className="status-inline status-inline--error">{error}</p>}
@@ -106,6 +177,28 @@ export function RecentPage(): JSX.Element {
 
             return (
               <article className="recent-list__item" key={`${row.track.key}-${row.track.startMs}`}>
+                <button
+                  type="button"
+                  className="control-pill control-pill--small recent-list__preview"
+                  disabled={previewLoadingKey === `${row.track.key}-${row.track.startMs}`}
+                  onClick={() => {
+                    const trackKey = getPreviewKey(row.track);
+                    if (previewingKey === trackKey) {
+                      stopPreview();
+                      return;
+                    }
+                    void startPreview(row.track);
+                  }}
+                >
+                  <PlayIcon />
+                  <span>
+                    {previewingKey === `${row.track.key}-${row.track.startMs}`
+                      ? "Stop"
+                      : previewLoadingKey === `${row.track.key}-${row.track.startMs}`
+                        ? "Loading..."
+                        : "Preview"}
+                  </span>
+                </button>
                 <img
                   src={row.track.artworkUrl}
                   alt={`${row.track.title} artwork`}
