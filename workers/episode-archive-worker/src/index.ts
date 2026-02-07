@@ -94,7 +94,11 @@ function toDateIso(ms: number): string {
 }
 
 async function fetchScJson<T>(env: Env, path: string, params: Record<string, string | number>): Promise<T> {
-  const url = new URL(path, env.SC_API_BASE);
+  const base = env.SC_API_BASE.endsWith("/") ? env.SC_API_BASE : `${env.SC_API_BASE}/`;
+  const url = new URL(base);
+  const normalizedPath = path.replace(/^\/+/, "");
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}/${normalizedPath}`;
+
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.set(key, String(value));
   });
@@ -234,6 +238,45 @@ async function fetchTracksForWindow(env: Env, startMs: number, endMs: number): P
 
     const oldestInPage = Number(normalized[normalized.length - 1]?.ts || 0);
     if (oldestInPage > 0 && oldestInPage < startMs && overlaps.length === 0) {
+      break;
+    }
+
+    if (normalized.length < HISTORY_PAGE_SIZE) {
+      break;
+    }
+
+    offset += HISTORY_PAGE_SIZE;
+  }
+
+  const deduped = new Map<string, RawHistoryTrack>();
+  for (const track of collected) {
+    const key = `${track.ts}-${track.title || ""}-${track.author || ""}`;
+    deduped.set(key, track);
+  }
+
+  return [...deduped.values()].sort((a, b) => Number(a.ts) - Number(b.ts));
+}
+
+async function fetchHistoryInRange(env: Env, rangeStartMs: number, rangeEndMs: number): Promise<RawHistoryTrack[]> {
+  const collected: RawHistoryTrack[] = [];
+  let offset = 0;
+
+  for (let page = 0; page < HISTORY_MAX_PAGES; page += 1) {
+    const rawPage = await fetchHistoryPage(env, HISTORY_PAGE_SIZE, offset);
+    if (!rawPage.length) {
+      break;
+    }
+
+    const normalized = rawPage
+      .map((track) => normalizeHistoryTrack(track))
+      .filter((track): track is RawHistoryTrack => Boolean(track))
+      .sort((a, b) => Number(b.ts) - Number(a.ts));
+
+    const overlaps = normalized.filter((track) => trackOverlapsWindow(track, rangeStartMs, rangeEndMs));
+    collected.push(...overlaps);
+
+    const oldestInPage = Number(normalized[normalized.length - 1]?.ts || 0);
+    if (oldestInPage > 0 && oldestInPage < rangeStartMs) {
       break;
     }
 
@@ -413,6 +456,14 @@ async function rebuildRecentEpisodes(env: Env, days: number): Promise<{ stored: 
     })
     .filter((item) => Number.isFinite(item.startMs) && Number.isFinite(item.endMs));
 
+  if (!programmeItems.length) {
+    return { stored: 0 };
+  }
+
+  const rangeStartMs = Math.min(...programmeItems.map((item) => item.startMs));
+  const rangeEndMs = Math.max(...programmeItems.map((item) => item.endMs));
+  const rangeTracks = await fetchHistoryInRange(env, rangeStartMs, rangeEndMs);
+
   let stored = 0;
   for (const item of programmeItems) {
     const key = makeEpisodeKey(item.slug, item.dateIso, item.startMs);
@@ -421,7 +472,9 @@ async function rebuildRecentEpisodes(env: Env, days: number): Promise<{ stored: 
       continue;
     }
 
-    const tracks = await fetchTracksForWindow(env, item.startMs, item.endMs);
+    const tracks = rangeTracks.filter((track) =>
+      trackOverlapsWindow(track, item.startMs, item.endMs)
+    );
     const record: EpisodeArchiveRecord = {
       episode: {
         key: `${item.slug}:${item.startMs}`,
