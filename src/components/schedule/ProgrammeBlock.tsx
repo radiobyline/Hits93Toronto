@@ -9,6 +9,9 @@ export function ProgrammeBlock(): JSX.Element {
       <div className="section-heading">
         <h2>Programme</h2>
       </div>
+      <p className="programme-block__intro">
+        Follow what is on air right now and what is coming up next.
+      </p>
 
       {loading && <p className="status-inline">Loading programme data...</p>}
       {error && <p className="status-inline status-inline--error">{error}</p>}

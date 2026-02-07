@@ -85,7 +85,7 @@ export function RecentPage(): JSX.Element {
 
   return (
     <div className="container">
-      <section className="page-section">
+      <section className="page-section recent-page">
         <h2>Full recently played history</h2>
         <p className="page-section__lede">
           Pulling Streaming Center history with incremental loading to keep rendering lightweight.
@@ -104,14 +104,13 @@ export function RecentPage(): JSX.Element {
               );
             }
 
-            const showTime = row.track.startMs >= startOfToday;
             return (
               <article className="recent-list__item" key={`${row.track.key}-${row.track.startMs}`}>
                 <img src={row.track.artworkUrl} alt={`${row.track.title} artwork`} loading="lazy" />
                 <div>
                   <h3>{row.track.title}</h3>
                   <p>{row.track.artist}</p>
-                  {showTime && <p className="recent-list__time">{formatClock(row.track.startMs)}</p>}
+                  <p className="recent-list__time">{formatClock(row.track.startMs)}</p>
                 </div>
               </article>
             );
@@ -120,10 +119,10 @@ export function RecentPage(): JSX.Element {
           {!loading && !hasResults && <p className="status-inline">No history returned yet.</p>}
         </div>
 
-        <div className="page-section__actions">
+        <div className="page-section__actions recent-page__actions">
           <button
             type="button"
-            className="control-button"
+            className="control-pill"
             disabled={loading}
             onClick={() => {
               void loadPage(offset, true);

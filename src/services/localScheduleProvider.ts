@@ -1,5 +1,6 @@
 import type { Programme, ScheduleProvider, ScheduleSnapshot } from "./scheduleProvider";
 import { getProgrammeArtworkUrl, resolveProgrammeSlug } from "../utils/programme";
+import { getProgrammeShortDescriptionByName } from "./programmeCatalog";
 
 interface DailyProgrammeTemplate {
   id: string;
@@ -15,7 +16,7 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "bassline",
     name: "Bassline",
-    description: "Deep catalogue and rhythmic pop to start the overnight hours.",
+    description: getProgrammeShortDescriptionByName("Bassline"),
     start: "00:00",
     end: "02:00",
     requestsEnabled: true,
@@ -24,7 +25,7 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "after-hours",
     name: "After Hours",
-    description: "Late-night selections, smooth transitions, and low-tempo discoveries.",
+    description: getProgrammeShortDescriptionByName("After Hours"),
     start: "02:00",
     end: "05:00",
     requestsEnabled: true,
@@ -33,7 +34,7 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "prime-hits-am",
     name: "Prime Hits",
-    description: "Top recurrent tracks and current chart movers.",
+    description: getProgrammeShortDescriptionByName("Prime Hits"),
     start: "05:00",
     end: "07:00",
     requestsEnabled: true,
@@ -42,7 +43,7 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "first-light",
     name: "First Light",
-    description: "Morning ramp-up with bright pop, throwbacks, and station updates.",
+    description: getProgrammeShortDescriptionByName("First Light"),
     start: "07:00",
     end: "10:00",
     requestsEnabled: true,
@@ -51,7 +52,7 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "prime-hits-midday",
     name: "Prime Hits",
-    description: "High-rotation favorites and listener picks.",
+    description: getProgrammeShortDescriptionByName("Prime Hits"),
     start: "10:00",
     end: "13:00",
     requestsEnabled: true,
@@ -60,43 +61,52 @@ const DAILY_TEMPLATE: DailyProgrammeTemplate[] = [
   {
     id: "the-a-list",
     name: "The A-List",
-    description: "The core daytime stack of biggest records and trending crossovers.",
+    description: getProgrammeShortDescriptionByName("The A-List"),
     start: "13:00",
     end: "16:00",
     requestsEnabled: true,
     timezone: "US/Eastern"
   },
   {
-    id: "good-energy",
-    name: "Good Energy",
-    description: "Afternoon momentum with upbeat tracks and audience interaction.",
+    id: "the-drive",
+    name: "The Drive",
+    description: getProgrammeShortDescriptionByName("The Drive"),
     start: "16:00",
-    end: "19:00",
+    end: "18:00",
     requestsEnabled: true,
     timezone: "US/Eastern"
   },
   {
-    id: "the-drive",
-    name: "The Drive",
-    description: "Drive-time blend of current hits and familiar power songs.",
-    start: "19:00",
-    end: "22:00",
+    id: "next-up",
+    name: "Next Up",
+    description: getProgrammeShortDescriptionByName("Next Up"),
+    start: "18:00",
+    end: "19:00",
     requestsEnabled: true,
     timezone: "US/Eastern"
   },
   {
     id: "next-wave",
     name: "Next Wave",
-    description: "Fresh adds and breakout tracks on a nighttime clock.",
-    start: "22:00",
-    end: "23:00",
+    description: getProgrammeShortDescriptionByName("Next Wave"),
+    start: "19:00",
+    end: "21:00",
     requestsEnabled: true,
     timezone: "US/Eastern"
   },
   {
     id: "low-key",
     name: "Low Key",
-    description: "Wind-down hour with mellow tempo and atmospheric curation.",
+    description: getProgrammeShortDescriptionByName("Low Key"),
+    start: "21:00",
+    end: "23:00",
+    requestsEnabled: true,
+    timezone: "US/Eastern"
+  },
+  {
+    id: "good-energy",
+    name: "Good Energy",
+    description: getProgrammeShortDescriptionByName("Good Energy"),
     start: "23:00",
     end: "00:00",
     requestsEnabled: true,

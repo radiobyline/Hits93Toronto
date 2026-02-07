@@ -36,7 +36,7 @@ export function EmbedPlayerPage(): JSX.Element {
           onVolumeChange={setVolume}
         />
 
-        <Visualizer analyserNode={analyserNode} isActive={isPlaying} />
+        <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} />
 
         {playbackError && <p className="status-inline status-inline--error">{playbackError}</p>}
       </article>

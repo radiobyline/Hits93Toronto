@@ -138,7 +138,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
         <footer className="modal__footer">
           <button
             type="button"
-            className="control-button"
+            className="control-pill"
             disabled={!selectedTrack || submitting}
             onClick={() => {
               if (!selectedTrack) {

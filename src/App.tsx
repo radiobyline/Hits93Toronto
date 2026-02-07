@@ -6,6 +6,7 @@ import { EmbedPlayerPage } from "./pages/EmbedPlayerPage";
 import { FeaturePlaceholderPage } from "./pages/FeaturePlaceholderPage";
 import { HomePage } from "./pages/HomePage";
 import { ProgrammeEpisodePage } from "./pages/ProgrammeEpisodePage";
+import { ProgrammePage } from "./pages/ProgrammePage";
 import { RecentPage } from "./pages/RecentPage";
 import { SchedulePage } from "./pages/SchedulePage";
 
@@ -17,15 +18,12 @@ export default function App(): JSX.Element {
         <Route index element={<HomePage />} />
         <Route path="recent" element={<RecentPage />} />
         <Route path="schedule" element={<SchedulePage />} />
+        <Route path="schedule/programmes/:slug" element={<ProgrammePage />} />
         <Route
           path="schedule/programme/:dateIso/:startMs/:slug"
           element={<ProgrammeEpisodePage />}
         />
         <Route path="schedule/programme/:dateIso/:startMs" element={<ProgrammeEpisodePage />} />
-        <Route
-          path="schedule/programme/:dateIso/:startMs/:slug/*"
-          element={<ProgrammeEpisodePage />}
-        />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route

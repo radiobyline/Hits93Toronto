@@ -3,6 +3,7 @@ import {
   SCHEDULE_GRID_LOOKBACK_DAYS,
   SERVER_ID
 } from "../config/constants";
+import { getProgrammeShortDescriptionByName } from "./programmeCatalog";
 import { getProgrammeArtworkUrl, resolveProgrammeSlug } from "../utils/programme";
 import { fetchJson } from "./apiClient";
 import type { Programme, ScheduleProvider, ScheduleSnapshot } from "./scheduleProvider";
@@ -26,23 +27,14 @@ function mapGridItemToProgramme(item: GridProgrammeItem): Programme {
   const endSec = Number(item.end_ts) || 0;
   const name = item.name?.toString() || "Programme";
   const slug = resolveProgrammeSlug(name);
-
-  const detailParts: string[] = [];
-  if (item.cast_type) {
-    detailParts.push(item.cast_type.replace(/_/g, " "));
-  }
-  if (item.allow_song_requests) {
-    detailParts.push("requests enabled");
-  }
-  if (item.timezone) {
-    detailParts.push(item.timezone);
-  }
+  const fallbackDescription =
+    item.cast_type?.toString().replace(/_/g, " ") ?? "Music programme block";
 
   return {
     id: `${item.id ?? "slot"}-${startSec}`,
     name,
     slug,
-    description: detailParts.join(" • ") || "Programme slot",
+    description: getProgrammeShortDescriptionByName(name, fallbackDescription),
     startMs: startSec * 1000,
     endMs: endSec * 1000,
     artworkUrl: getProgrammeArtworkUrl(name),

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Track } from "../../types";
+import { formatClock } from "../../utils/time";
 
 interface RecentCarouselProps {
   tracks: Track[];
@@ -10,7 +11,9 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
     <section className="recent-carousel">
       <div className="section-heading">
         <h2>Recently played</h2>
-        <Link to="/recent">See all</Link>
+        <Link to="/recent" className="control-pill control-pill--small recent-carousel__see-all">
+          See all history
+        </Link>
       </div>
 
       <div className="recent-carousel__track-row" role="list">
@@ -25,6 +28,7 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
             <div className="recent-card__meta">
               <h3>{track.title}</h3>
               <p>{track.artist}</p>
+              <p className="recent-card__time">{formatClock(track.startMs)}</p>
             </div>
           </article>
         ))}

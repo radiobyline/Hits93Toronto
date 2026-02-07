@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { ThemeMode } from "../../hooks/useTheme";
+import { MoonIcon, SunIcon } from "../ui/Icons";
 
 interface HeaderProps {
   theme: ThemeMode;
@@ -15,6 +16,8 @@ const NAV_ITEMS = [
 ];
 
 export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
+  const isDark = theme === "dark";
+
   return (
     <header className="site-header">
       <div className="site-header__inner container">
@@ -37,9 +40,17 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
           ))}
         </nav>
 
-        <button type="button" className="theme-toggle" onClick={onToggleTheme}>
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
+        <div className="site-header__actions">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+            <span>{isDark ? "Light" : "Dark"}</span>
+          </button>
+        </div>
       </div>
     </header>
   );

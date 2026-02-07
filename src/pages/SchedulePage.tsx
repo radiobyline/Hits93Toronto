@@ -43,6 +43,23 @@ function formatDateLabel(dateIso: string, todayStart: Date): string {
   return absoluteLabel;
 }
 
+function formatDuration(startMs: number, endMs: number): string {
+  const durationMs = Math.max(0, endMs - startMs);
+  const totalMinutes = Math.round(durationMs / (60 * 1000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+
+  return `${minutes}m`;
+}
+
 export function SchedulePage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Programme[]>([]);
@@ -79,6 +96,8 @@ export function SchedulePage(): JSX.Element {
     return fromQuery;
   }, [searchParams, todayIso, minDateIso, maxDateIso]);
 
+  const isTodaySelected = selectedDateIso === todayIso;
+
   useEffect(() => {
     const parsedDate = parseIsoDateLocal(selectedDateIso);
     if (!parsedDate) {
@@ -100,6 +119,29 @@ export function SchedulePage(): JSX.Element {
 
     void load();
   }, [selectedDateIso]);
+
+  const currentProgrammeId = useMemo(() => {
+    if (!isTodaySelected) {
+      return null;
+    }
+
+    const nowMs = Date.now();
+    const current = items.find((item) => nowMs >= item.startMs && nowMs < item.endMs);
+    return current?.id ?? null;
+  }, [items, isTodaySelected]);
+
+  const orderedItems = useMemo(() => {
+    if (!currentProgrammeId) {
+      return items;
+    }
+
+    const current = items.find((item) => item.id === currentProgrammeId);
+    if (!current) {
+      return items;
+    }
+
+    return [current, ...items.filter((item) => item.id !== currentProgrammeId)];
+  }, [items, currentProgrammeId]);
 
   const updateSelectedDate = (nextDateIso: string) => {
     if (!parseIsoDateLocal(nextDateIso)) {
@@ -139,14 +181,13 @@ export function SchedulePage(): JSX.Element {
       <section className="page-section">
         <h2>Programme schedule</h2>
         <p className="page-section__lede">
-          Uses the Streaming Center grid endpoint with automatic local fallback. Open any block for
-          a dedicated programme episode page and 14-day archive.
+          Browse each day, open full episode pages, and jump into dedicated programme pages.
         </p>
 
         <div className="schedule-controls">
           <button
             type="button"
-            className="control-button control-button--small"
+            className="control-pill control-pill--small"
             onClick={() => {
               selectRelativeDay(-1);
             }}
@@ -170,7 +211,7 @@ export function SchedulePage(): JSX.Element {
 
           <button
             type="button"
-            className="control-button control-button--small"
+            className="control-pill control-pill--small"
             onClick={() => {
               selectRelativeDay(1);
             }}
@@ -181,7 +222,7 @@ export function SchedulePage(): JSX.Element {
 
           <button
             type="button"
-            className="control-button control-button--small"
+            className="control-pill control-pill--small"
             onClick={() => {
               updateSelectedDate(todayIso);
             }}
@@ -192,57 +233,67 @@ export function SchedulePage(): JSX.Element {
         </div>
 
         <p className="status-inline">Showing {formatDateLabel(selectedDateIso, todayStart)}</p>
+        {currentProgrammeId && (
+          <p className="status-inline">On-air programme is pinned to the top.</p>
+        )}
         {loading && <p className="status-inline">Loading schedule...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
 
         <div className="schedule-list">
-          {items.map((item) => (
-            <article className="schedule-list__item" key={item.id}>
-              <div className="schedule-list__times">
-                <strong>{formatClock(item.startMs)}</strong>
-                <span>to</span>
-                <strong>{formatClock(item.endMs)}</strong>
-              </div>
+          {orderedItems.map((item) => {
+            const episodePath = `/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`;
+            const programmePath = `/schedule/programmes/${item.slug}`;
+            const isCurrent = item.id === currentProgrammeId;
 
-              <Link
-                to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
-                state={{ episode: item }}
-                className="schedule-list__art-link"
-                aria-label={`Open ${item.name} episode page`}
+            return (
+              <article
+                className={`schedule-list__item ${isCurrent ? "schedule-list__item--current" : ""}`}
+                key={item.id}
               >
-                <img
-                  src={item.artworkUrl}
-                  alt={`${item.name} artwork`}
-                  loading="lazy"
-                  className="schedule-list__artwork"
-                  onError={(event) => {
-                    event.currentTarget.src = DEFAULT_ARTWORK_URL;
-                  }}
-                />
-              </Link>
+                <div className="schedule-list__times">
+                  {isCurrent && <p className="schedule-list__live-tag">On air now</p>}
+                  <p className="schedule-list__time-range">
+                    {formatClock(item.startMs)} to {formatClock(item.endMs)}
+                  </p>
+                  <p className="schedule-list__duration">{formatDuration(item.startMs, item.endMs)}</p>
+                </div>
 
-              <div className="schedule-list__meta">
-                <h3>
-                  <Link
-                    to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
-                    state={{ episode: item }}
-                  >
-                    {item.name}
-                  </Link>
-                </h3>
-                <p>{item.description}</p>
                 <Link
-                  to={`/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`}
+                  to={episodePath}
                   state={{ episode: item }}
-                  className="schedule-list__episode-link"
+                  className="schedule-list__art-link"
+                  aria-label={`Open ${item.name} episode page`}
                 >
-                  Open episode page
+                  <img
+                    src={item.artworkUrl}
+                    alt={`${item.name} artwork`}
+                    loading="lazy"
+                    className="schedule-list__artwork"
+                    onError={(event) => {
+                      event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                    }}
+                  />
                 </Link>
-              </div>
-            </article>
-          ))}
 
-          {!loading && !items.length && (
+                <div className="schedule-list__meta">
+                  <h3>
+                    <Link to={programmePath}>{item.name}</Link>
+                  </h3>
+                  <p>{item.description}</p>
+                  <div className="schedule-list__actions">
+                    <Link to={episodePath} state={{ episode: item }} className="control-pill control-pill--small">
+                      Open episode page
+                    </Link>
+                    <Link to={programmePath} className="schedule-list__programme-link">
+                      Programme details
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+
+          {!loading && !orderedItems.length && (
             <p className="status-inline">No programme blocks returned for this day.</p>
           )}
         </div>

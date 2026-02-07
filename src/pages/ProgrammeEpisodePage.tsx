@@ -5,13 +5,9 @@ import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
+import { getProgrammeLongDescriptionBySlug } from "../services/programmeCatalog";
 import type { Track } from "../types";
-import {
-  formatIsoDateLocal,
-  parseIsoDateLocal,
-  resolveProgrammeSlug,
-  shiftLocalDays
-} from "../utils/programme";
+import { formatIsoDateLocal, parseIsoDateLocal, resolveProgrammeSlug, shiftLocalDays } from "../utils/programme";
 import { formatClock } from "../utils/time";
 
 interface EpisodeViewState {
@@ -45,6 +41,16 @@ function dedupeProgrammes(items: Programme[]): Programme[] {
     seen.add(key);
     return true;
   });
+}
+
+function formatMinutesAgo(trackStartMs: number): string {
+  const deltaMs = Date.now() - trackStartMs;
+  if (deltaMs <= 60 * 1000) {
+    return "Just now";
+  }
+
+  const minutes = Math.max(1, Math.floor(deltaMs / (60 * 1000)));
+  return `${minutes} min ago`;
 }
 
 export function ProgrammeEpisodePage(): JSX.Element {
@@ -123,9 +129,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
         if (!matchedEpisode) {
           matchedEpisode =
-            selectedDayItems.find(
-              (item) => item.startMs === parsedStartMs && item.slug === requestedSlug
-            ) ??
+            selectedDayItems.find((item) => item.startMs === parsedStartMs && item.slug === requestedSlug) ??
             selectedDayItems.find((item) => item.startMs === parsedStartMs) ??
             allItems.find((item) => item.startMs === parsedStartMs && item.slug === requestedSlug) ??
             allItems.find((item) => item.startMs === parsedStartMs) ??
@@ -139,7 +143,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
           return;
         }
 
-        const archive = allItems.filter((item) => item.slug === matchedEpisode.slug);
+        const archive = allItems
+          .filter((item) => item.slug === matchedEpisode.slug)
+          .sort((a, b) => b.startMs - a.startMs);
+
         let tracks: Track[] = [];
 
         try {
@@ -178,24 +185,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
   const selectedDateIso = parsedDate ? formatIsoDateLocal(parsedDate) : formatIsoDateLocal(new Date());
 
-  const renderTrackTimeLabel = (track: Track): string | null => {
-    if (isCurrentEpisode) {
-      const deltaMs = Date.now() - track.startMs;
-      if (deltaMs <= 60 * 1000) {
-        return "Just now";
-      }
-
-      const minutes = Math.max(1, Math.floor(deltaMs / (60 * 1000)));
-      return `${minutes} min ago`;
-    }
-
-    const ageMs = Date.now() - track.startMs;
-    if (ageMs <= 24 * 60 * 60 * 1000) {
-      return formatClock(track.startMs);
-    }
-
-    return null;
-  };
+  const programmePath = state.episode ? `/schedule/programmes/${state.episode.slug}` : "/schedule";
+  const recentEpisodes = state.episode
+    ? state.archive.filter((item) => item.startMs !== state.episode?.startMs).slice(0, 8)
+    : [];
 
   return (
     <div className="container">
@@ -203,6 +196,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
         <div className="programme-episode__top">
           <Link to={`/schedule?date=${selectedDateIso}`} className="programme-episode__back">
             Back to schedule
+          </Link>
+          <Link to={programmePath} className="programme-episode__back">
+            Programme page
           </Link>
         </div>
 
@@ -224,61 +220,17 @@ export function ProgrammeEpisodePage(): JSX.Element {
               <div className="programme-episode__meta">
                 <p className="programme-episode__kicker">Programme episode</p>
                 <h2>{state.episode.name}</h2>
-                <p>{state.episode.description}</p>
+                <p>{getProgrammeLongDescriptionBySlug(state.episode.slug, state.episode.description)}</p>
                 <div className="programme-episode__facts">
                   <p>
                     <strong>Date:</strong> {formatProgrammeDate(state.episode.startMs)}
                   </p>
                   <p>
-                    <strong>Time:</strong> {formatClock(state.episode.startMs)} to{" "}
-                    {formatClock(state.episode.endMs)}
-                  </p>
-                  {state.episode.timezone && (
-                    <p>
-                      <strong>Timezone:</strong> {state.episode.timezone}
-                    </p>
-                  )}
-                  <p>
-                    <strong>Requests:</strong> {state.episode.requestsEnabled ? "Enabled" : "Disabled"}
+                    <strong>Time:</strong> {formatClock(state.episode.startMs)} to {formatClock(state.episode.endMs)}
                   </p>
                 </div>
               </div>
             </article>
-
-            <section className="programme-episode__archive">
-              <div className="section-heading">
-                <h3>Recent episodes</h3>
-              </div>
-              <p className="page-section__lede">
-                Unique blocks for {state.episode.name} across the last{" "}
-                {SCHEDULE_EPISODE_LOOKBACK_DAYS} days.
-              </p>
-
-              <div className="programme-episode-list">
-                {state.archive.map((item) => {
-                  const itemDateIso = formatIsoDateLocal(new Date(item.startMs));
-                  return (
-                    <article
-                      className="programme-episode-list__item"
-                      key={`${item.slug}-${item.startMs}-${item.endMs}`}
-                    >
-                      <div>
-                        <h4>{formatProgrammeDate(item.startMs)}</h4>
-                        <p>
-                          {formatClock(item.startMs)} to {formatClock(item.endMs)}
-                        </p>
-                      </div>
-                      <Link
-                        to={`/schedule/programme/${itemDateIso}/${item.startMs}/${item.slug}`}
-                        state={{ episode: item }}
-                      >
-                        Open episode
-                      </Link>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
 
             <section className="programme-episode__history">
               <div className="section-heading">
@@ -288,7 +240,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
               <div className="recent-list">
                 {state.tracks.map((track) => {
-                  const timeLabel = renderTrackTimeLabel(track);
+                  const timeLabel = isCurrentEpisode ? formatMinutesAgo(track.startMs) : null;
                   return (
                     <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
                       <img
@@ -310,9 +262,48 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
                 {!state.tracks.length && (
                   <p className="status-inline">
-                    No track history returned for this block yet. It may be outside currently
-                    available history retention.
+                    No track history returned for this block yet. It may be outside currently available
+                    history retention.
                   </p>
+                )}
+              </div>
+            </section>
+
+            <section className="programme-episode__archive">
+              <div className="section-heading">
+                <h3>Recent episodes</h3>
+                <Link to={programmePath} className="schedule-list__programme-link">
+                  View all
+                </Link>
+              </div>
+
+              <div className="programme-episode-list">
+                {recentEpisodes.map((item) => {
+                  const itemDateIso = formatIsoDateLocal(new Date(item.startMs));
+                  return (
+                    <article
+                      className="programme-episode-list__item"
+                      key={`${item.slug}-${item.startMs}-${item.endMs}`}
+                    >
+                      <div>
+                        <h4>{formatProgrammeDate(item.startMs)}</h4>
+                        <p>
+                          {formatClock(item.startMs)} to {formatClock(item.endMs)}
+                        </p>
+                      </div>
+                      <Link
+                        to={`/schedule/programme/${itemDateIso}/${item.startMs}/${item.slug}`}
+                        state={{ episode: item }}
+                        className="control-pill control-pill--small"
+                      >
+                        Open episode
+                      </Link>
+                    </article>
+                  );
+                })}
+
+                {!recentEpisodes.length && (
+                  <p className="status-inline">No other recent episodes were found for this programme.</p>
                 )}
               </div>
             </section>

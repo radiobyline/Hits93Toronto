@@ -9,6 +9,7 @@ import { LiveIndicator } from "./LiveIndicator";
 import { MusicLinks } from "./MusicLinks";
 import { PlayerControls } from "./PlayerControls";
 import { Visualizer } from "./Visualizer";
+import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
 
 export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLElement> }): JSX.Element {
   const {
@@ -24,8 +25,7 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
     recentTracks,
     togglePlayback,
     setMuted,
-    setVolume,
-    refreshMetadata
+    setVolume
   } = useAudioPlayer();
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -56,6 +56,19 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
     <>
       <section className="hero-player" ref={rootRef}>
         <div className="hero-player__main">
+          <div className="hero-player__artwork-panel">
+            <img
+              src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
+              alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
+              className="hero-player__artwork"
+              onError={(event) => {
+                const img = event.currentTarget;
+                img.src = DEFAULT_ARTWORK_URL;
+              }}
+            />
+            <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} />
+          </div>
+
           <div className="hero-player__meta">
             <p className="hero-player__overline">Toronto Live Broadcast</p>
             <LiveIndicator isActive={isPlaying} />
@@ -78,22 +91,13 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
             <div className="hero-player__utility-row">
               <button
                 type="button"
-                className="control-button"
+                className="control-pill control-pill--request"
                 onClick={() => {
                   setRequestModalOpen(true);
                 }}
               >
-                Request a track
-              </button>
-
-              <button
-                type="button"
-                className="control-button"
-                onClick={() => {
-                  void refreshMetadata();
-                }}
-              >
-                Refresh metadata
+                <RequestIcon />
+                <span>Request a track</span>
               </button>
             </div>
 
@@ -104,23 +108,27 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
               <div className="vote-block__buttons">
                 <button
                   type="button"
-                  className="control-button"
+                  className="control-pill"
                   disabled={!currentTrack?.allMusicId || Boolean(currentVote)}
                   onClick={() => {
                     castVote("up");
                   }}
+                  aria-label="Upvote current track"
                 >
-                  Upvote
+                  <ThumbUpIcon />
+                  <span>Upvote</span>
                 </button>
                 <button
                   type="button"
-                  className="control-button"
+                  className="control-pill"
                   disabled={!currentTrack?.allMusicId || Boolean(currentVote)}
                   onClick={() => {
                     castVote("down");
                   }}
+                  aria-label="Downvote current track"
                 >
-                  Downvote
+                  <ThumbDownIcon />
+                  <span>Downvote</span>
                 </button>
               </div>
               <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
@@ -130,19 +138,6 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
               <p className="status-inline status-inline--error">{metadataError ?? playbackError}</p>
             )}
             {isLoadingMetadata && <p className="status-inline">Loading metadata...</p>}
-          </div>
-
-          <div className="hero-player__artwork-panel">
-            <img
-              src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
-              alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
-              className="hero-player__artwork"
-              onError={(event) => {
-                const img = event.currentTarget;
-                img.src = DEFAULT_ARTWORK_URL;
-              }}
-            />
-            <Visualizer analyserNode={analyserNode} isActive={isPlaying} />
           </div>
         </div>
 

@@ -1,3 +1,5 @@
+import { MuteIcon, PauseIcon, PlayIcon, VolumeIcon } from "../ui/Icons";
+
 interface PlayerControlsProps {
   isPlaying: boolean;
   isMuted: boolean;
@@ -21,20 +23,29 @@ export function PlayerControls({
     <div className="player-controls" role="group" aria-label="Live player controls">
       <button
         type="button"
-        className="control-button control-button--play"
+        className="control-pill control-pill--play"
         onClick={() => {
           void onTogglePlayback();
         }}
+        aria-label={isPlaying ? "Pause live stream" : "Play live stream"}
       >
-        {isPlaying ? "Pause" : "Play"}
+        {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        <span>{isPlaying ? "Pause" : "Play live"}</span>
       </button>
 
-      <button type="button" className="control-button" onClick={onToggleMuted}>
-        {isMuted ? "Unmute" : "Mute"}
+      <button
+        type="button"
+        className="control-pill"
+        onClick={onToggleMuted}
+        aria-label={isMuted ? "Unmute stream" : "Mute stream"}
+      >
+        {isMuted ? <MuteIcon /> : <VolumeIcon />}
+        <span>{isMuted ? "Unmute" : "Mute"}</span>
       </button>
 
       <label className="volume-control" htmlFor="volume-slider">
-        <span>Volume</span>
+        <span className="sr-only">Volume</span>
+        {isMuted ? <MuteIcon /> : <VolumeIcon />}
         <input
           id="volume-slider"
           type="range"
