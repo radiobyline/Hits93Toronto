@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="36" fill="#0C1E38"/>
+  <circle cx="150" cy="110" r="210" fill="#37CBB0" fill-opacity="0.18"/>
+  <circle cx="420" cy="390" r="190" fill="#FF7C43" fill-opacity="0.25"/>
+  <rect x="64" y="96" width="384" height="320" rx="28" fill="#102845" stroke="#2F4E72"/>
+  <path d="M176 184H336" stroke="#B3CCE8" stroke-width="14" stroke-linecap="round"/>
+  <path d="M176 240H336" stroke="#B3CCE8" stroke-width="14" stroke-linecap="round"/>
+  <path d="M176 296H272" stroke="#B3CCE8" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="320" cy="296" r="44" fill="#FF7C43"/>
+  <circle cx="320" cy="296" r="18" fill="#F9F3EC"/>
+  <text x="256" y="398" text-anchor="middle" fill="#E4F0FF" font-family="Arial, sans-serif" font-size="28">HITS 93 TORONTO</text>
+</svg>
