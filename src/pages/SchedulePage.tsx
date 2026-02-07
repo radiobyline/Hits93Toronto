@@ -6,13 +6,16 @@ import { scheduleProvider } from "../services/scheduleService";
 import { formatClock } from "../utils/time";
 import { formatIsoDateLocal, parseIsoDateLocal, shiftLocalDays } from "../utils/programme";
 
-function formatDateLabel(dateIso: string): string {
-  const parsed = parseIsoDateLocal(dateIso);
-  if (!parsed) {
-    return dateIso;
-  }
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
 
-  return parsed.toLocaleDateString([], {
+function formatAbsoluteDateLabel(date: Date): string {
+  return date.toLocaleDateString([], {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -20,30 +23,61 @@ function formatDateLabel(dateIso: string): string {
   });
 }
 
+function formatDateLabel(dateIso: string, todayStart: Date): string {
+  const parsed = parseIsoDateLocal(dateIso);
+  if (!parsed) {
+    return dateIso;
+  }
+
+  const yesterday = shiftLocalDays(todayStart, -1);
+  const absoluteLabel = formatAbsoluteDateLabel(parsed);
+
+  if (isSameLocalDay(parsed, todayStart)) {
+    return `Today (${absoluteLabel})`;
+  }
+
+  if (isSameLocalDay(parsed, yesterday)) {
+    return `Yesterday (${absoluteLabel})`;
+  }
+
+  return absoluteLabel;
+}
+
 export function SchedulePage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Programme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDateIso, setSelectedDateIso] = useState(() => {
-    const fromQuery = searchParams.get("date");
-    if (parseIsoDateLocal(fromQuery ?? "")) {
-      return fromQuery ?? formatIsoDateLocal(new Date());
-    }
-    return formatIsoDateLocal(new Date());
-  });
 
-  const today = useMemo(() => {
+  const todayStart = useMemo(() => {
     const value = new Date();
     value.setHours(0, 0, 0, 0);
     return value;
   }, []);
+  const todayIso = useMemo(() => formatIsoDateLocal(todayStart), [todayStart]);
 
   const minDateIso = useMemo(() => {
-    return formatIsoDateLocal(shiftLocalDays(today, -SCHEDULE_EPISODE_LOOKBACK_DAYS));
-  }, [today]);
+    return formatIsoDateLocal(shiftLocalDays(todayStart, -SCHEDULE_EPISODE_LOOKBACK_DAYS));
+  }, [todayStart]);
 
-  const maxDateIso = useMemo(() => formatIsoDateLocal(today), [today]);
+  const maxDateIso = useMemo(() => todayIso, [todayIso]);
+
+  const selectedDateIso = useMemo(() => {
+    const fromQuery = searchParams.get("date") ?? todayIso;
+    if (!parseIsoDateLocal(fromQuery)) {
+      return todayIso;
+    }
+
+    if (fromQuery < minDateIso) {
+      return minDateIso;
+    }
+
+    if (fromQuery > maxDateIso) {
+      return maxDateIso;
+    }
+
+    return fromQuery;
+  }, [searchParams, todayIso, minDateIso, maxDateIso]);
 
   useEffect(() => {
     const parsedDate = parseIsoDateLocal(selectedDateIso);
@@ -67,20 +101,24 @@ export function SchedulePage(): JSX.Element {
     void load();
   }, [selectedDateIso]);
 
-  useEffect(() => {
-    setSearchParams({ date: selectedDateIso }, { replace: true });
-  }, [selectedDateIso, setSearchParams]);
-
-  useEffect(() => {
-    const fromQuery = searchParams.get("date");
-    if (!fromQuery || fromQuery === selectedDateIso) {
+  const updateSelectedDate = (nextDateIso: string) => {
+    if (!parseIsoDateLocal(nextDateIso)) {
       return;
     }
 
-    if (parseIsoDateLocal(fromQuery)) {
-      setSelectedDateIso(fromQuery);
+    if (nextDateIso < minDateIso || nextDateIso > maxDateIso) {
+      return;
     }
-  }, [searchParams, selectedDateIso]);
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextDateIso === todayIso) {
+      nextParams.delete("date");
+    } else {
+      nextParams.set("date", nextDateIso);
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const selectRelativeDay = (offsetDays: number) => {
     const parsed = parseIsoDateLocal(selectedDateIso);
@@ -93,7 +131,7 @@ export function SchedulePage(): JSX.Element {
       return;
     }
 
-    setSelectedDateIso(nextIso);
+    updateSelectedDate(nextIso);
   };
 
   return (
@@ -125,7 +163,7 @@ export function SchedulePage(): JSX.Element {
               min={minDateIso}
               max={maxDateIso}
               onChange={(event) => {
-                setSelectedDateIso(event.currentTarget.value);
+                updateSelectedDate(event.currentTarget.value);
               }}
             />
           </label>
@@ -145,15 +183,15 @@ export function SchedulePage(): JSX.Element {
             type="button"
             className="control-button control-button--small"
             onClick={() => {
-              setSelectedDateIso(formatIsoDateLocal(new Date()));
+              updateSelectedDate(todayIso);
             }}
-            disabled={selectedDateIso === formatIsoDateLocal(new Date())}
+            disabled={selectedDateIso === todayIso}
           >
             Today
           </button>
         </div>
 
-        <p className="status-inline">Showing {formatDateLabel(selectedDateIso)}</p>
+        <p className="status-inline">Showing {formatDateLabel(selectedDateIso, todayStart)}</p>
         {loading && <p className="status-inline">Loading schedule...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
 

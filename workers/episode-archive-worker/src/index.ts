@@ -427,7 +427,7 @@ async function handleEpisodeRequest(request: Request, env: Env): Promise<Respons
 
 function isAdminAuthorized(request: Request, env: Env): boolean {
   if (!env.ARCHIVE_ADMIN_TOKEN) {
-    return true;
+    return false;
   }
 
   const auth = request.headers.get("Authorization") || "";

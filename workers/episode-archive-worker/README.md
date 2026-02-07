@@ -18,16 +18,24 @@ Cloudflare Worker that creates/stores programme episode JSON pages so episode hi
 - `GET /v1/programmes/{slug}.json`
   - Returns index of archived episodes for a programme.
 - `POST /v1/rebuild?days=14`
-  - Rebuilds recent archives (optional bearer auth via `ARCHIVE_ADMIN_TOKEN`).
+  - Rebuilds recent archives (requires bearer auth via `ARCHIVE_ADMIN_TOKEN`).
 
 ## Deploy
 
 1. Create KV namespace and copy ID into `wrangler.toml`.
 2. Copy `wrangler.toml.example` to `wrangler.toml`.
-3. Set optional token:
+3. Set admin token:
    - `wrangler secret put ARCHIVE_ADMIN_TOKEN`
 4. Deploy:
    - `wrangler deploy`
+
+Manual rebuild example:
+
+```bash
+curl -X POST \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
+  "https://YOUR-WORKER.workers.dev/v1/rebuild?days=14"
+```
 
 ## Frontend integration
 
