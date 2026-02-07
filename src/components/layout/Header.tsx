@@ -9,8 +9,10 @@ interface HeaderProps {
 
 const NAV_ITEMS = [
   { to: "/", label: "Live" },
+  { to: "/jukebox", label: "Jukebox" },
   { to: "/recent", label: "Recently Played" },
   { to: "/schedule", label: "Schedule" },
+  { to: "/news", label: "News" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" }
 ];
@@ -22,8 +24,11 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
     <header className="site-header">
       <div className="site-header__inner container">
         <div className="brand-mark">
-          <span className="brand-mark__eyebrow">Toronto Live Radio</span>
-          <h1 className="brand-mark__title">Hits 93 Toronto</h1>
+          <span className="brand-mark__eyebrow">Toronto live radio</span>
+          <h1 className="brand-mark__title" aria-label="Hits 93 Toronto Radio">
+            <span className="brand-mark__title-main">HITS 93</span>
+            <span className="brand-mark__title-sub">TORONTO RADIO</span>
+          </h1>
         </div>
 
         <nav className="site-nav" aria-label="Primary">

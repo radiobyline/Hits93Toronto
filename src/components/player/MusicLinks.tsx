@@ -26,7 +26,7 @@ export function MusicLinks({ track }: MusicLinksProps): JSX.Element {
     {
       href: `https://open.spotify.com/search/${query}`,
       label: "Spotify",
-      hint: "Add to your Spotify library",
+      hint: "Add to your Spotify Library",
       className: "music-link music-link--spotify"
     },
     {
@@ -38,7 +38,7 @@ export function MusicLinks({ track }: MusicLinksProps): JSX.Element {
     {
       href: `https://www.youtube.com/results?search_query=${query}`,
       label: "YouTube",
-      hint: "Open on YouTube",
+      hint: "Open in YouTube",
       className: "music-link music-link--youtube"
     }
   ];

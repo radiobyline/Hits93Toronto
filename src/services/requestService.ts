@@ -20,6 +20,9 @@ interface RequestSearchItem {
   author?: string;
   album?: string;
   requestable?: boolean;
+  image_large?: string;
+  image_medium?: string;
+  tag_image?: string;
 }
 
 interface RequestSearchResponse {
@@ -53,7 +56,8 @@ export const requestService = {
         id: item.id as number,
         title: (item.title || "Unknown title").toString(),
         artist: (item.author || "Unknown artist").toString(),
-        album: item.album?.toString()
+        album: item.album?.toString(),
+        artworkUrl: item.image_large || item.image_medium || item.tag_image || undefined
       }));
   },
 

@@ -131,6 +131,21 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     audio.crossOrigin = "anonymous";
     audio.volume = 0.82;
 
+    const silenceAndStop = () => {
+      try {
+        audio.muted = true;
+        audio.volume = 0;
+      } catch {
+        // no-op
+      }
+
+      try {
+        audio.pause();
+      } catch {
+        // no-op
+      }
+    };
+
     const handlePlaying = () => {
       setIsPlaying(true);
       setIsBuffering(false);
@@ -163,11 +178,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     audio.addEventListener("stalled", handleWaiting);
     audio.addEventListener("error", handleError);
     audio.addEventListener("volumechange", handleVolumeChange);
+    window.addEventListener("pagehide", silenceAndStop);
+    window.addEventListener("beforeunload", silenceAndStop);
 
     audioElementRef.current = audio;
 
     return () => {
-      audio.pause();
+      window.removeEventListener("pagehide", silenceAndStop);
+      window.removeEventListener("beforeunload", silenceAndStop);
+      silenceAndStop();
       audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("waiting", handleWaiting);
@@ -176,7 +195,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       audio.removeEventListener("volumechange", handleVolumeChange);
       audio.src = "";
       audioElementRef.current = null;
-      void audioContextRef.current?.close();
+      try {
+        mediaSourceRef.current?.disconnect();
+      } catch {
+        // no-op
+      }
+      try {
+        analyserRef.current?.disconnect();
+      } catch {
+        // no-op
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        void audioContextRef.current.close().catch(() => undefined);
+      }
       mediaSourceRef.current = null;
       analyserRef.current = null;
       audioContextRef.current = null;

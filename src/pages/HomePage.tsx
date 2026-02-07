@@ -4,25 +4,27 @@ import { usePlayerViewport } from "../context/PlayerViewportContext";
 
 export function HomePage(): JSX.Element {
   const heroRef = useRef<HTMLElement>(null);
+  const miniPlayerSentinelRef = useRef<HTMLDivElement>(null);
   const { setMainPlayerInView } = usePlayerViewport();
 
   useEffect(() => {
-    const heroElement = heroRef.current;
-    if (!heroElement) {
+    const marker = miniPlayerSentinelRef.current;
+    if (!marker) {
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        setMainPlayerInView(entry.isIntersecting && entry.intersectionRatio > 0.25);
+        const sentinelIsBelowViewport = entry.boundingClientRect.top > 0;
+        setMainPlayerInView(entry.isIntersecting || sentinelIsBelowViewport);
       },
       {
-        threshold: [0.1, 0.25, 0.5]
+        threshold: [0, 0.01]
       }
     );
 
-    observer.observe(heroElement);
+    observer.observe(marker);
 
     return () => {
       observer.disconnect();
@@ -33,7 +35,7 @@ export function HomePage(): JSX.Element {
   return (
     <div className="home-page">
       <div className="container container--hero">
-        <MainPlayerHero rootRef={heroRef} />
+        <MainPlayerHero rootRef={heroRef} miniPlayerSentinelRef={miniPlayerSentinelRef} />
       </div>
     </div>
   );

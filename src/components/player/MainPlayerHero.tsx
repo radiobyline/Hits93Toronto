@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
-import { voteService } from "../../services/voteService";
+import { useTrackVote } from "../../hooks/useTrackVote";
 import { RecentCarousel } from "../history/RecentCarousel";
 import { RequestModal } from "../requests/RequestModal";
 import { ProgrammeBlock } from "../schedule/ProgrammeBlock";
@@ -11,7 +12,12 @@ import { PlayerControls } from "./PlayerControls";
 import { Visualizer } from "./Visualizer";
 import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
 
-export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLElement> }): JSX.Element {
+interface MainPlayerHeroProps {
+  rootRef: React.RefObject<HTMLElement>;
+  miniPlayerSentinelRef: React.RefObject<HTMLDivElement>;
+}
+
+export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHeroProps): JSX.Element {
   const {
     analyserNode,
     currentTrack,
@@ -29,52 +35,66 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
   } = useAudioPlayer();
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [voteNote, setVoteNote] = useState("");
-
-  const voteKey = currentTrack
-    ? `${currentTrack.allMusicId ?? currentTrack.key}:${currentTrack.startMs}`
-    : "";
-  const currentVote = voteKey ? voteService.getVote(voteKey) : null;
-
-  const castVote = (direction: "up" | "down") => {
-    if (!voteKey || !currentTrack?.allMusicId) {
-      setVoteNote("Track id unavailable for voting.");
-      return;
-    }
-
-    const submit =
-      direction === "up"
-        ? voteService.voteUp(voteKey, currentTrack.allMusicId)
-        : voteService.voteDown(voteKey, currentTrack.allMusicId);
-
-    void submit.then((result) => {
-      setVoteNote(result.note);
-    });
-  };
+  const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
 
   return (
     <>
       <section className="hero-player" ref={rootRef}>
         <div className="hero-player__main">
           <div className="hero-player__artwork-panel">
-            <img
-              src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
-              alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
-              className="hero-player__artwork"
-              onError={(event) => {
-                const img = event.currentTarget;
-                img.src = DEFAULT_ARTWORK_URL;
-              }}
-            />
-            <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} />
+            <div className="hero-player__artwork-wrap">
+              <img
+                src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
+                alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
+                className="hero-player__artwork"
+                onError={(event) => {
+                  const img = event.currentTarget;
+                  img.src = DEFAULT_ARTWORK_URL;
+                }}
+              />
+              <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} mode="ring" />
+            </div>
           </div>
 
           <div className="hero-player__meta">
-            <p className="hero-player__overline">Toronto Live Broadcast</p>
+            <p className="hero-player__overline">Hits 93 Toronto Live Stream</p>
             <LiveIndicator isActive={isPlaying} />
             <h2>{currentTrack?.title ?? "Live from Hits 93 Toronto"}</h2>
-            <p>{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
-            {currentTrack?.album && <p className="hero-player__album">{currentTrack.album}</p>}
+            <p className="hero-player__artist">{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
+            {currentTrack?.album && <p className="hero-player__album">Album: {currentTrack.album}</p>}
+
+            {currentTrack?.allMusicId && (
+              <div className="hero-player__vote-inline">
+                <p>Rate this song</p>
+                <div className="hero-player__vote-inline-buttons">
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small"
+                    disabled={!canVote}
+                    onClick={() => {
+                      castVote("up");
+                    }}
+                    aria-label="Like current track"
+                  >
+                    <ThumbUpIcon />
+                    <span>Like</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small"
+                    disabled={!canVote}
+                    onClick={() => {
+                      castVote("down");
+                    }}
+                    aria-label="Dislike current track"
+                  >
+                    <ThumbDownIcon />
+                    <span>Dislike</span>
+                  </button>
+                </div>
+                <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
+              </div>
+            )}
 
             <PlayerControls
               isPlaying={isPlaying}
@@ -91,48 +111,20 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
             <div className="hero-player__utility-row">
               <button
                 type="button"
-                className="control-pill control-pill--request"
+                className="control-pill control-pill--request control-pill--request-primary"
                 onClick={() => {
                   setRequestModalOpen(true);
                 }}
               >
                 <RequestIcon />
-                <span>Request a track</span>
+                <span>Open Jukebox: Request tracks and add shoutouts</span>
               </button>
+              <Link to="/jukebox" className="control-pill control-pill--small">
+                Open full Jukebox page
+              </Link>
             </div>
 
             <MusicLinks track={currentTrack} />
-
-            <div className="vote-block">
-              <p>Rate this track</p>
-              <div className="vote-block__buttons">
-                <button
-                  type="button"
-                  className="control-pill"
-                  disabled={!currentTrack?.allMusicId || Boolean(currentVote)}
-                  onClick={() => {
-                    castVote("up");
-                  }}
-                  aria-label="Upvote current track"
-                >
-                  <ThumbUpIcon />
-                  <span>Upvote</span>
-                </button>
-                <button
-                  type="button"
-                  className="control-pill"
-                  disabled={!currentTrack?.allMusicId || Boolean(currentVote)}
-                  onClick={() => {
-                    castVote("down");
-                  }}
-                  aria-label="Downvote current track"
-                >
-                  <ThumbDownIcon />
-                  <span>Downvote</span>
-                </button>
-              </div>
-              <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
-            </div>
 
             {(metadataError || playbackError) && (
               <p className="status-inline status-inline--error">{metadataError ?? playbackError}</p>
@@ -142,6 +134,7 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
         </div>
 
         <RecentCarousel tracks={recentTracks.slice(0, 5)} />
+        <div ref={miniPlayerSentinelRef} className="mini-player-sentinel" aria-hidden="true" />
         <ProgrammeBlock />
       </section>
 

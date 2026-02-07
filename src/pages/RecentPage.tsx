@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { HISTORY_PAGE_SIZE } from "../config/constants";
+import { DEFAULT_ARTWORK_URL, HISTORY_PAGE_SIZE } from "../config/constants";
 import { fetchHistory } from "../services/historyService";
 import type { Track } from "../types";
 import { formatClock } from "../utils/time";
@@ -106,7 +106,14 @@ export function RecentPage(): JSX.Element {
 
             return (
               <article className="recent-list__item" key={`${row.track.key}-${row.track.startMs}`}>
-                <img src={row.track.artworkUrl} alt={`${row.track.title} artwork`} loading="lazy" />
+                <img
+                  src={row.track.artworkUrl}
+                  alt={`${row.track.title} artwork`}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                  }}
+                />
                 <div>
                   <h3>{row.track.title}</h3>
                   <p>{row.track.artist}</p>

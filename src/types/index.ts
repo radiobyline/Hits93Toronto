@@ -40,6 +40,7 @@ export interface RequestLibraryTrack {
   title: string;
   artist: string;
   album?: string;
+  artworkUrl?: string;
 }
 
 export interface SubmitRequestPayload {

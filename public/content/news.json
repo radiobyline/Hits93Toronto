@@ -1,0 +1,23 @@
+{
+  "title": "News",
+  "intro": "Station updates, release notes, and editorial posts. You can publish updates by editing this JSON or replacing it from your CMS export pipeline.",
+  "posts": [
+    {
+      "slug": "hello-again",
+      "title": "Hello, again!",
+      "date": "2026-01-31",
+      "excerpt": "Hits 93 Toronto returns in early 2026 with a renewed focus and simpler approach.",
+      "imageUrl": "/content/news-hello-again.svg",
+      "sections": [
+        "We’re back.",
+        "After some time away, Hits 93 Toronto is officially back on the air.",
+        "If you’ve been around for a while, you’ll know that Hits has never been a traditional radio station. From the beginning, it was built as an internet-first project with a global audience in mind, and with a strong desire to spotlight great music, including Canadian artists, beyond borders and formats.",
+        "In January 2025, the station went quiet. I made the decision to step away, pause operations, and take the time needed to reset. That break was intentional, and necessary.",
+        "Now, in early 2026, Hits 93 Toronto has returned with a renewed focus and a simpler approach. The goal isn’t to chase everything at once, but to do what the station has always done best: curate music thoughtfully, respect the listener’s time, and let the music speak for itself.",
+        "You’ll hear familiar sounds, new discoveries, and programming designed to fit naturally into different parts of the day. The station remains independent, online-only, and shaped by listening habits that stretch far beyond Toronto.",
+        "Whether you’re a long-time listener or finding Hits for the first time, thanks for being here. More updates, refinements, and features will follow, but for now, we’re glad to be back.",
+        "Welcome back to Hits 93 Toronto."
+      ]
+    }
+  ]
+}

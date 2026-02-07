@@ -20,7 +20,7 @@ interface VoteResult {
 
 function readVotes(): VoteMap {
   try {
-    const rawValue = localStorage.getItem(VOTE_STORAGE_KEY);
+    const rawValue = sessionStorage.getItem(VOTE_STORAGE_KEY);
     if (!rawValue) {
       return {};
     }
@@ -32,7 +32,7 @@ function readVotes(): VoteMap {
 }
 
 function writeVotes(votes: VoteMap): void {
-  localStorage.setItem(VOTE_STORAGE_KEY, JSON.stringify(votes));
+  sessionStorage.setItem(VOTE_STORAGE_KEY, JSON.stringify(votes));
 }
 
 function setVote(trackKey: string, direction: VoteDirection): void {

@@ -2,8 +2,9 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { usePlayerViewport } from "../../context/PlayerViewportContext";
 import { useTheme } from "../../hooks/useTheme";
-import { Header } from "./Header";
 import { MiniPlayer } from "../player/MiniPlayer";
+import { Footer } from "./Footer";
+import { Header } from "./Header";
 
 export function AppShell(): JSX.Element {
   const { theme, toggleTheme } = useTheme();
@@ -17,9 +18,14 @@ export function AppShell(): JSX.Element {
   return (
     <div className="app-root">
       <Header theme={theme} onToggleTheme={toggleTheme} />
-      <main className={`site-main ${showMiniPlayer ? "site-main--with-mini" : ""}`}>
+      <main
+        className={`site-main ${isHomeRoute ? "site-main--home" : ""} ${
+          showMiniPlayer ? "site-main--with-mini" : ""
+        }`}
+      >
         <Outlet />
       </main>
+      <Footer />
       {showMiniPlayer && <MiniPlayer />}
     </div>
   );

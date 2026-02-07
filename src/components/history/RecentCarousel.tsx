@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import type { Track } from "../../types";
 import { formatClock } from "../../utils/time";
 
@@ -24,6 +25,9 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
               alt={`${track.title} artwork`}
               loading="lazy"
               className="recent-card__image"
+              onError={(event) => {
+                event.currentTarget.src = DEFAULT_ARTWORK_URL;
+              }}
             />
             <div className="recent-card__meta">
               <h3>{track.title}</h3>
