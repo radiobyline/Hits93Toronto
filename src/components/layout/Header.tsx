@@ -24,10 +24,8 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
     <header className="site-header">
       <div className="site-header__inner container">
         <div className="brand-mark">
-          <span className="brand-mark__eyebrow">Toronto live radio</span>
-          <h1 className="brand-mark__title" aria-label="Hits 93 Toronto Radio">
-            <span className="brand-mark__title-main">HITS 93</span>
-            <span className="brand-mark__title-sub">TORONTO RADIO</span>
+          <h1 className="brand-mark__title" aria-label="HiTS 93 Toronto">
+            <span className="brand-mark__title-main">HiTS 93 Toronto</span>
           </h1>
         </div>
 
