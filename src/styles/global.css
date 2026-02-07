@@ -2,9 +2,13 @@
 
 @font-face {
   font-family: "Avallon Alt";
-  src: local("Avallon Alt"), local("AvallonAlt");
+  src:
+    local("Avallon Alt"),
+    local("AvallonAlt"),
+    url("../assets/fonts/AvallonAlt.woff") format("woff");
   font-style: normal;
   font-weight: 400;
+  font-display: swap;
 }
 
 :root {
