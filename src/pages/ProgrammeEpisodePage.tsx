@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import { DEFAULT_ARTWORK_URL, SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import { fetchHistoryForWindow } from "../services/historyService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
+import type { Track } from "../types";
 import {
   formatIsoDateLocal,
   parseIsoDateLocal,
@@ -14,6 +16,7 @@ import { formatClock } from "../utils/time";
 interface EpisodeViewState {
   episode: Programme | null;
   archive: Programme[];
+  tracks: Track[];
 }
 
 function formatProgrammeDate(ms: number): string {
@@ -43,9 +46,11 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [state, setState] = useState<EpisodeViewState>({
     episode: null,
-    archive: []
+    archive: [],
+    tracks: []
   });
 
   const parsedDate = useMemo(() => parseIsoDateLocal(params.dateIso ?? ""), [params.dateIso]);
@@ -67,6 +72,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
       }
 
       setLoading(true);
+      setHistoryError(null);
       try {
         const days = Array.from({ length: SCHEDULE_EPISODE_LOOKBACK_DAYS + 1 }, (_, index) =>
           shiftLocalDays(parsedDate, -index)
@@ -92,17 +98,29 @@ export function ProgrammeEpisodePage(): JSX.Element {
           null;
 
         if (!matchedEpisode) {
-          setState({ episode: null, archive: [] });
+          setState({ episode: null, archive: [], tracks: [] });
           setError("Episode not found for that date/timeslot.");
           setLoading(false);
           return;
         }
 
         const archive = allItems.filter((item) => item.slug === matchedEpisode.slug);
+        let tracks: Track[] = [];
+
+        try {
+          tracks = await fetchHistoryForWindow(matchedEpisode.startMs, matchedEpisode.endMs);
+        } catch (historyRequestError) {
+          setHistoryError(
+            historyRequestError instanceof Error
+              ? historyRequestError.message
+              : "Unable to load track history for this programme block right now."
+          );
+        }
 
         setState({
           episode: matchedEpisode,
-          archive
+          archive,
+          tracks
         });
         setError(null);
       } catch (requestError) {
@@ -137,7 +155,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
                 alt={`${state.episode.name} artwork`}
                 className="programme-episode__artwork"
                 onError={(event) => {
-                  event.currentTarget.src = "/default-artwork.svg";
+                  event.currentTarget.src = DEFAULT_ARTWORK_URL;
                 }}
               />
 
@@ -194,6 +212,40 @@ export function ProgrammeEpisodePage(): JSX.Element {
                     </article>
                   );
                 })}
+              </div>
+            </section>
+
+            <section className="programme-episode__history">
+              <div className="section-heading">
+                <h3>Tracks played in this episode</h3>
+              </div>
+              {historyError && <p className="status-inline status-inline--error">{historyError}</p>}
+
+              <div className="recent-list">
+                {state.tracks.map((track) => (
+                  <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
+                    <img
+                      src={track.artworkUrl}
+                      alt={`${track.title} artwork`}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                      }}
+                    />
+                    <div>
+                      <h4>{track.title}</h4>
+                      <p>{track.artist}</p>
+                      <p className="recent-list__time">{formatClock(track.startMs)}</p>
+                    </div>
+                  </article>
+                ))}
+
+                {!state.tracks.length && (
+                  <p className="status-inline">
+                    No track history returned for this block yet. It may be outside currently
+                    available history retention.
+                  </p>
+                )}
               </div>
             </section>
           </>

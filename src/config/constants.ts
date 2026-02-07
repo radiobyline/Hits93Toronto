@@ -1,8 +1,10 @@
+import { resolvePublicAssetUrl } from "../utils/assets";
+
 export const API_BASE = "https://hits93toronto.com:2490/api/v2";
 export const STREAM_URL_HTTPS = "https://hits93toronto.com:2955/stream";
 export const STREAM_URL_HTTP = "http://hits93toronto.com:2950/stream";
 export const SERVER_ID = 1;
-export const DEFAULT_ARTWORK_URL = "/default-artwork.svg";
+export const DEFAULT_ARTWORK_URL = resolvePublicAssetUrl("default-artwork.svg");
 export const POLL_INTERVAL_MS = 12000;
 export const OPTIONAL_WORKER_PROXY_URL = "";
 

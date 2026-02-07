@@ -10,6 +10,9 @@ interface HistoryResponse {
   data?: RawHistoryTrack[];
 }
 
+const HISTORY_WINDOW_PAGE_SIZE = 200;
+const HISTORY_WINDOW_MAX_PAGES = 40;
+
 function extractRawTracks(payload: HistoryResponse | RawHistoryTrack[]): RawHistoryTrack[] {
   if (Array.isArray(payload)) {
     return payload;
@@ -46,6 +49,47 @@ export async function fetchHistory(limit: number, offset: number): Promise<Track
     .filter((track) => track.startMs > 0);
 
   return sortTracksByStartDesc(tracks);
+}
+
+function trackOverlapsWindow(track: Track, windowStartMs: number, windowEndMs: number): boolean {
+  const inferredEndMs =
+    track.endMs ??
+    (track.lengthMs > 0 ? track.startMs + track.lengthMs : track.startMs + 60 * 1000);
+
+  return track.startMs < windowEndMs && inferredEndMs > windowStartMs;
+}
+
+export async function fetchHistoryForWindow(windowStartMs: number, windowEndMs: number): Promise<Track[]> {
+  const collected: Track[] = [];
+  let offset = 0;
+
+  for (let pageIndex = 0; pageIndex < HISTORY_WINDOW_MAX_PAGES; pageIndex += 1) {
+    const page = await fetchHistory(HISTORY_WINDOW_PAGE_SIZE, offset);
+    if (!page.length) {
+      break;
+    }
+
+    const overlaps = page.filter((track) => trackOverlapsWindow(track, windowStartMs, windowEndMs));
+    collected.push(...overlaps);
+
+    const newestStartMs = page[0]?.startMs ?? 0;
+    if (newestStartMs < windowStartMs && overlaps.length === 0) {
+      break;
+    }
+
+    if (page.length < HISTORY_WINDOW_PAGE_SIZE) {
+      break;
+    }
+
+    offset += HISTORY_WINDOW_PAGE_SIZE;
+  }
+
+  const deduped = new Map<string, Track>();
+  for (const track of collected) {
+    deduped.set(`${track.key}-${track.startMs}`, track);
+  }
+
+  return [...deduped.values()].sort((a, b) => a.startMs - b.startMs);
 }
 
 export function shapeHistoryForPlayer(tracks: Track[]): HistoryResult {

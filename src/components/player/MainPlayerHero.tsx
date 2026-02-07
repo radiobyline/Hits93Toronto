@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { voteService } from "../../services/voteService";
 import { RecentCarousel } from "../history/RecentCarousel";
@@ -133,12 +134,12 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
 
           <div className="hero-player__artwork-panel">
             <img
-              src={currentTrack?.artworkUrl ?? "/default-artwork.svg"}
+              src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
               alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
               className="hero-player__artwork"
               onError={(event) => {
                 const img = event.currentTarget;
-                img.src = "/default-artwork.svg";
+                img.src = DEFAULT_ARTWORK_URL;
               }}
             />
             <Visualizer analyserNode={analyserNode} isActive={isPlaying} />

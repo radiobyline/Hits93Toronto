@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import { DEFAULT_ARTWORK_URL, SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
 import { formatClock } from "../utils/time";
@@ -177,7 +177,7 @@ export function SchedulePage(): JSX.Element {
                   loading="lazy"
                   className="schedule-list__artwork"
                   onError={(event) => {
-                    event.currentTarget.src = "/default-artwork.svg";
+                    event.currentTarget.src = DEFAULT_ARTWORK_URL;
                   }}
                 />
               </Link>

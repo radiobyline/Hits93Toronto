@@ -1,16 +1,17 @@
 import { DEFAULT_ARTWORK_URL } from "../config/constants";
+import { resolvePublicAssetUrl } from "./assets";
 
 const PROGRAMME_ARTWORK_BY_SLUG: Record<string, string> = {
-  "after-hours": "/programmes/after-hours.png",
-  bassline: "/programmes/bassline.png",
-  "first-light": "/programmes/first-light.png",
-  "good-energy": "/programmes/good-energy.png",
-  "low-key": "/programmes/low-key.png",
-  "next-up": "/programmes/next-up.png",
-  "next-wave": "/programmes/next-wave.png",
-  "prime-hits": "/programmes/prime-hits.png",
-  "the-a-list": "/programmes/the-a-list.png",
-  "the-drive": "/programmes/the-drive.png"
+  "after-hours": "programmes/after-hours.png",
+  bassline: "programmes/bassline.png",
+  "first-light": "programmes/first-light.png",
+  "good-energy": "programmes/good-energy.png",
+  "low-key": "programmes/low-key.png",
+  "next-up": "programmes/next-up.png",
+  "next-wave": "programmes/next-wave.png",
+  "prime-hits": "programmes/prime-hits.png",
+  "the-a-list": "programmes/the-a-list.png",
+  "the-drive": "programmes/the-drive.png"
 };
 
 const PROGRAMME_ALIAS_TO_SLUG: Record<string, string> = {
@@ -35,7 +36,8 @@ export function resolveProgrammeSlug(name: string): string {
 
 export function getProgrammeArtworkUrl(programmeName: string): string {
   const slug = resolveProgrammeSlug(programmeName);
-  return PROGRAMME_ARTWORK_BY_SLUG[slug] ?? DEFAULT_ARTWORK_URL;
+  const mappedPath = PROGRAMME_ARTWORK_BY_SLUG[slug];
+  return mappedPath ? resolvePublicAssetUrl(mappedPath) : DEFAULT_ARTWORK_URL;
 }
 
 export function formatIsoDateLocal(date: Date): string {
