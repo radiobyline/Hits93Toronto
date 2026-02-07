@@ -25,8 +25,8 @@ Edit `/src/config/constants.ts`:
 - `/#/` Home live player
 - `/#/recent` Full recently played (load more)
 - `/#/schedule` Schedule page (grid endpoint + local fallback provider)
-- `/#/about` Placeholder
-- `/#/contact` Placeholder
+- `/#/about` CMS-driven page (`/public/content/about.json`)
+- `/#/contact` CMS-driven page (`/public/content/contact.json`)
 - `/#/jukebox` Placeholder
 - `/#/charts` Placeholder
 - `/#/news` Placeholder
@@ -112,6 +112,16 @@ Worker route usage example:
 
 - `/proxy?path=/history/&limit=8&offset=0&server=1`
 
+## CMS Content (GitHub Pages-friendly)
+
+- Editable content files:
+  - `/public/content/about.json`
+  - `/public/content/contact.json`
+- The app fetches those files at runtime, so About/Contact can be updated without code changes.
+- Free CMS options compatible with this setup:
+  - Publii: maintain pages in Publii and export/sync these JSON files into this repo.
+  - Pages CMS (hosted): connect your GitHub repo and edit `/public/content/*.json` in a CMS UI.
+
 ## Connected API Endpoints
 
 - Schedule grid: `/grid/?start_ts={unix_sec}&end_ts={unix_sec}&server=1&utc=1`
@@ -140,5 +150,4 @@ Worker route usage example:
 - Vote dedupe is stored in `localStorage` (`hits93toronto:votes`) to prevent repeated local spam.
 - Schedule provider reads `/grid/` using dynamic Unix windows and falls back to local schedule if unavailable.
 - Audio starts only via user action to satisfy autoplay restrictions.
-- Visualizer uses Web Audio API analyser connected after user-triggered playback.
-# Hits93Toronto
+- Visualizer uses a single persistent Web Audio graph to avoid remount crashes when returning to Live.

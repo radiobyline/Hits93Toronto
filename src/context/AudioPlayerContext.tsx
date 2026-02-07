@@ -14,6 +14,7 @@ import type { Track } from "../types";
 
 interface AudioPlayerContextValue {
   audioElement: HTMLAudioElement | null;
+  analyserNode: AnalyserNode | null;
   isPlaying: boolean;
   isMuted: boolean;
   volume: number;
@@ -58,6 +59,9 @@ function computeNextRefreshDelay(currentTrack: Track | null): number {
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.Element {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(0.82);
@@ -68,6 +72,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [recentTracks, setRecentTracks] = useState<Track[]>([]);
+  const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
   const currentTrackRef = useRef<Track | null>(null);
 
@@ -171,7 +176,55 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       audio.removeEventListener("volumechange", handleVolumeChange);
       audio.src = "";
       audioElementRef.current = null;
+      void audioContextRef.current?.close();
+      mediaSourceRef.current = null;
+      analyserRef.current = null;
+      audioContextRef.current = null;
+      setAnalyserNode(null);
     };
+  }, []);
+
+  const ensureAudioGraph = useCallback(() => {
+    const audio = audioElementRef.current;
+    if (!audio) {
+      return;
+    }
+
+    if (analyserRef.current && audioContextRef.current) {
+      return;
+    }
+
+    if (!(window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)) {
+      return;
+    }
+
+    try {
+      const NativeAudioContext =
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+      if (!NativeAudioContext) {
+        return;
+      }
+
+      const context = new NativeAudioContext();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.85;
+
+      const source = context.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(context.destination);
+
+      audioContextRef.current = context;
+      mediaSourceRef.current = source;
+      analyserRef.current = analyser;
+      setAnalyserNode(analyser);
+    } catch (error) {
+      setPlaybackError(
+        error instanceof Error ? error.message : "Unable to initialize visualizer audio graph."
+      );
+    }
   }, []);
 
   const play = useCallback(async () => {
@@ -180,10 +233,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       return;
     }
 
+    ensureAudioGraph();
+
     setHasInteracted(true);
     setPlaybackError(null);
 
     try {
+      if (audioContextRef.current?.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
       await audio.play();
       setIsPlaying(true);
     } catch (error) {
@@ -194,7 +252,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       );
       setIsPlaying(false);
     }
-  }, []);
+  }, [ensureAudioGraph]);
 
   const pause = useCallback(() => {
     const audio = audioElementRef.current;
@@ -247,6 +305,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const value = useMemo(
     () => ({
       audioElement: audioElementRef.current,
+      analyserNode,
       isPlaying,
       isMuted,
       volume,
@@ -265,6 +324,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       refreshMetadata
     }),
     [
+      analyserNode,
       isPlaying,
       isMuted,
       volume,

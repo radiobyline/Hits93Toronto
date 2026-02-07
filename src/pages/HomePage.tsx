@@ -31,8 +31,10 @@ export function HomePage(): JSX.Element {
   }, [setMainPlayerInView]);
 
   return (
-    <div className="container">
-      <MainPlayerHero rootRef={heroRef} />
+    <div className="home-page">
+      <div className="container container--hero">
+        <MainPlayerHero rootRef={heroRef} />
+      </div>
     </div>
   );
 }

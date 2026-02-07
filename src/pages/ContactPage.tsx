@@ -1,9 +1,32 @@
+import { useEffect, useState } from "react";
+import { fetchCmsPageContent, type CmsPageContent } from "../services/cmsContentService";
+
 export function ContactPage(): JSX.Element {
+  const [content, setContent] = useState<CmsPageContent | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void fetchCmsPageContent("contact").then((page) => {
+      if (active) {
+        setContent(page);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="container">
       <section className="page-section placeholder-page">
-        <h2>Contact</h2>
-        <p>Placeholder page ready for contact forms, social links, and studio details.</p>
+        <h2>{content?.title ?? "Contact"}</h2>
+        {content?.intro && <p>{content.intro}</p>}
+        {content?.sections.map((section) => (
+          <p key={section}>{section}</p>
+        ))}
+        {!content && <p>Loading content...</p>}
       </section>
     </div>
   );

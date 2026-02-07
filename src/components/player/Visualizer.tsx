@@ -1,50 +1,30 @@
 import { useEffect, useRef } from "react";
 
 interface VisualizerProps {
-  audioElement: HTMLAudioElement | null;
+  analyserNode: AnalyserNode | null;
   isActive: boolean;
 }
 
-export function Visualizer({ audioElement, isActive }: VisualizerProps): JSX.Element {
+export function Visualizer({ analyserNode, isActive }: VisualizerProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number>();
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   useEffect(() => {
-    if (!audioElement || !canvasRef.current) {
+    if (!analyserNode || !canvasRef.current) {
       return;
-    }
-
-    if (!audioContextRef.current) {
-      const context = new AudioContext();
-      const analyser = context.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.85;
-
-      const source = context.createMediaElementSource(audioElement);
-      source.connect(analyser);
-      analyser.connect(context.destination);
-
-      audioContextRef.current = context;
-      analyserRef.current = analyser;
-      sourceNodeRef.current = source;
     }
 
     const canvas = canvasRef.current;
     const context2d = canvas.getContext("2d");
-    const analyser = analyserRef.current;
-    const audioContext = audioContextRef.current;
 
-    if (!context2d || !analyser || !audioContext) {
+    if (!context2d) {
       return;
     }
 
-    const data = new Uint8Array(analyser.frequencyBinCount);
+    const data = new Uint8Array(analyserNode.frequencyBinCount);
 
     const draw = () => {
-      analyser.getByteFrequencyData(data);
+      analyserNode.getByteFrequencyData(data);
 
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -79,7 +59,6 @@ export function Visualizer({ audioElement, isActive }: VisualizerProps): JSX.Ele
     };
 
     if (isActive) {
-      void audioContext.resume();
       draw();
     } else {
       context2d.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -90,7 +69,7 @@ export function Visualizer({ audioElement, isActive }: VisualizerProps): JSX.Ele
         window.cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [audioElement, isActive]);
+  }, [analyserNode, isActive]);
 
   return <canvas ref={canvasRef} className="audio-visualizer" aria-hidden="true" />;
 }

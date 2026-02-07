@@ -5,7 +5,7 @@ import { Visualizer } from "../components/player/Visualizer";
 
 export function EmbedPlayerPage(): JSX.Element {
   const {
-    audioElement,
+    analyserNode,
     currentTrack,
     isPlaying,
     isMuted,
@@ -36,7 +36,7 @@ export function EmbedPlayerPage(): JSX.Element {
           onVolumeChange={setVolume}
         />
 
-        <Visualizer audioElement={audioElement} isActive={isPlaying} />
+        <Visualizer analyserNode={analyserNode} isActive={isPlaying} />
 
         {playbackError && <p className="status-inline status-inline--error">{playbackError}</p>}
       </article>

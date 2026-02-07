@@ -11,7 +11,7 @@ import { Visualizer } from "./Visualizer";
 
 export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLElement> }): JSX.Element {
   const {
-    audioElement,
+    analyserNode,
     currentTrack,
     isPlaying,
     isMuted,
@@ -56,9 +56,10 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
       <section className="hero-player" ref={rootRef}>
         <div className="hero-player__main">
           <div className="hero-player__meta">
+            <p className="hero-player__overline">Toronto Live Broadcast</p>
             <LiveIndicator isActive={isPlaying} />
             <h2>{currentTrack?.title ?? "Live from Hits 93 Toronto"}</h2>
-            <p>{currentTrack?.artist ?? "Press play to start the stream"}</p>
+            <p>{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
             {currentTrack?.album && <p className="hero-player__album">{currentTrack.album}</p>}
 
             <PlayerControls
@@ -140,7 +141,7 @@ export function MainPlayerHero({ rootRef }: { rootRef: React.RefObject<HTMLEleme
                 img.src = "/default-artwork.svg";
               }}
             />
-            <Visualizer audioElement={audioElement} isActive={isPlaying} />
+            <Visualizer analyserNode={analyserNode} isActive={isPlaying} />
           </div>
         </div>
 
