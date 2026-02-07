@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { ThemeMode } from "../../hooks/useTheme";
+import { resolvePublicAssetUrl } from "../../utils/assets";
 import { MoonIcon, SunIcon } from "../ui/Icons";
 
 interface HeaderProps {
@@ -19,14 +20,15 @@ const NAV_ITEMS = [
 
 export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const isDark = theme === "dark";
+  const logoSrc = isDark
+    ? resolvePublicAssetUrl("branding/hits93-dark.svg")
+    : resolvePublicAssetUrl("branding/hits93-light.svg");
 
   return (
     <header className="site-header">
       <div className="site-header__inner container">
         <div className="brand-mark">
-          <h1 className="brand-mark__title" aria-label="HiTS 93 Toronto">
-            <span className="brand-mark__title-main">HiTS 93 Toronto</span>
-          </h1>
+          <img className="brand-mark__logo" src={logoSrc} alt="HiTS 93 Toronto" />
         </div>
 
         <nav className="site-nav" aria-label="Primary">
