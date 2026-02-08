@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { DEFAULT_ARTWORK_URL, SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import {
+  DEFAULT_ARTWORK_URL,
+  EPISODE_LIVE_REFRESH_MS,
+  SCHEDULE_EPISODE_LOOKBACK_DAYS
+} from "../config/constants";
 import { PlayIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
@@ -44,6 +48,11 @@ function dedupeProgrammes(items: Programme[]): Programme[] {
     seen.add(key);
     return true;
   });
+}
+
+function isEpisodeOnAir(episode: Programme): boolean {
+  const now = Date.now();
+  return episode.startMs <= now && now < episode.endMs;
 }
 
 function formatMinutesAgo(trackStartMs: number): string {
@@ -185,6 +194,65 @@ export function ProgrammeEpisodePage(): JSX.Element {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    let refreshIntervalId: number | undefined;
+
+    const clearRefresh = () => {
+      if (refreshIntervalId) {
+        window.clearInterval(refreshIntervalId);
+        refreshIntervalId = undefined;
+      }
+    };
+
+    const loadTracks = async (episode: Programme): Promise<void> => {
+      try {
+        let tracks: Track[] = [];
+        if (isEpisodeOnAir(episode)) {
+          tracks = await fetchHistoryForWindow(episode.startMs, episode.endMs);
+        } else {
+          const archivedTracks = await fetchEpisodeArchiveTracks(
+            formatIsoDateLocal(new Date(episode.startMs)),
+            episode.startMs,
+            episode.slug
+          );
+          tracks =
+            archivedTracks && archivedTracks.length > 0
+              ? archivedTracks
+              : await fetchHistoryForWindow(episode.startMs, episode.endMs);
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setState((previous) => {
+          if (
+            !previous.episode ||
+            previous.episode.startMs !== episode.startMs ||
+            previous.episode.slug !== episode.slug
+          ) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            tracks
+          };
+        });
+        setHistoryError(null);
+      } catch (historyRequestError) {
+        if (cancelled) {
+          return;
+        }
+
+        setHistoryError(
+          historyRequestError instanceof Error
+            ? historyRequestError.message
+            : "Unable to load track history for this program block right now."
+        );
+      }
+    };
+
     const load = async () => {
       if (!parsedDate) {
         setError("Invalid episode date in route.");
@@ -200,6 +268,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
       setLoading(true);
       setHistoryError(null);
+
       try {
         let matchedEpisode = initialEpisodeFromState;
         const days = Array.from({ length: SCHEDULE_EPISODE_LOOKBACK_DAYS + 1 }, (_, index) =>
@@ -216,6 +285,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
           })
         );
 
+        if (cancelled) {
+          return;
+        }
+
         const selectedDayItems = results[0] ?? [];
         const allItems = dedupeProgrammes(results.flat()).sort((a, b) => b.startMs - a.startMs);
 
@@ -231,7 +304,6 @@ export function ProgrammeEpisodePage(): JSX.Element {
         if (!matchedEpisode) {
           setState({ episode: null, archive: [], tracks: [] });
           setError("Episode not found for that date/timeslot.");
-          setLoading(false);
           return;
         }
 
@@ -239,40 +311,45 @@ export function ProgrammeEpisodePage(): JSX.Element {
           .filter((item) => item.slug === matchedEpisode.slug)
           .sort((a, b) => b.startMs - a.startMs);
 
-        let tracks: Track[] = [];
-
-        try {
-          const archivedTracks = await fetchEpisodeArchiveTracks(
-            formatIsoDateLocal(new Date(matchedEpisode.startMs)),
-            matchedEpisode.startMs,
-            matchedEpisode.slug
-          );
-          tracks =
-            archivedTracks && archivedTracks.length > 0
-              ? archivedTracks
-              : await fetchHistoryForWindow(matchedEpisode.startMs, matchedEpisode.endMs);
-        } catch (historyRequestError) {
-          setHistoryError(
-            historyRequestError instanceof Error
-              ? historyRequestError.message
-              : "Unable to load track history for this program block right now."
-          );
-        }
-
         setState({
           episode: matchedEpisode,
           archive,
-          tracks
+          tracks: []
         });
         setError(null);
+        await loadTracks(matchedEpisode);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (isEpisodeOnAir(matchedEpisode)) {
+          refreshIntervalId = window.setInterval(() => {
+            if (!isEpisodeOnAir(matchedEpisode)) {
+              clearRefresh();
+              return;
+            }
+
+            void loadTracks(matchedEpisode);
+          }, EPISODE_LIVE_REFRESH_MS);
+        }
       } catch (requestError) {
-        setError(requestError instanceof Error ? requestError.message : "Failed to load episode page.");
+        if (!cancelled) {
+          setError(requestError instanceof Error ? requestError.message : "Failed to load episode page.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void load();
+
+    return () => {
+      cancelled = true;
+      clearRefresh();
+    };
   }, [parsedDate, parsedStartMs, requestedSlug, initialEpisodeFromState]);
 
   const selectedDateIso = parsedDate ? formatIsoDateLocal(parsedDate) : formatIsoDateLocal(new Date());

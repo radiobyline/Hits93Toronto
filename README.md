@@ -50,6 +50,12 @@ npm run build
 npm run preview
 ```
 
+Trigger a GitHub Pages redeploy manually (empty commit + push):
+
+```bash
+npm run deploy:pages
+```
+
 ## GitHub Pages Deploy
 
 1. Push this repo to GitHub.

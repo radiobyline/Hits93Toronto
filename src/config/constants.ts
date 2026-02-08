@@ -6,6 +6,11 @@ export const STREAM_URL_HTTP = "http://hits93toronto.com:2950/stream";
 export const SERVER_ID = 1;
 export const DEFAULT_ARTWORK_URL = resolvePublicAssetUrl("default-artwork.png");
 export const POLL_INTERVAL_MS = 12000;
+export const EPISODE_LIVE_REFRESH_MS = 30000;
+export const HISTORY_CACHE_TTL_LIVE_MS = 9000;
+export const HISTORY_CACHE_TTL_PAST_MS = 120000;
+export const HISTORY_WINDOW_CACHE_TTL_LIVE_MS = 20000;
+export const HISTORY_WINDOW_CACHE_TTL_PAST_MS = 300000;
 export const OPTIONAL_WORKER_PROXY_URL: string = "";
 export const OPTIONAL_EPISODE_ARCHIVE_URL: string =
   "https://hits93-episode-archive.viktor-elias.workers.dev";
