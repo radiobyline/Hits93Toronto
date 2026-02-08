@@ -18,10 +18,14 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
       </div>
 
       <div className="recent-carousel__track-row" role="list">
-        {tracks.map((track) => (
-          <article className="recent-card" key={`${track.key}-${track.startMs}`} role="listitem">
+        {tracks.map((track) => {
+          const imageSrc =
+            track.raw.img_medium_url || track.raw.img_url || track.artworkUrl || DEFAULT_ARTWORK_URL;
+
+          return (
+            <article className="recent-card" key={`${track.key}-${track.startMs}`} role="listitem">
             <img
-              src={track.artworkUrl}
+              src={imageSrc}
               alt={`${track.title} artwork`}
               loading="lazy"
               className="recent-card__image"
@@ -34,8 +38,9 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
               <p>{track.artist}</p>
               <p className="recent-card__time">{formatClock(track.startMs)}</p>
             </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
 
         {!tracks.length && (
           <article className="recent-card recent-card--empty">

@@ -205,7 +205,7 @@ export function RecentPage(): JSX.Element {
                   </span>
                 </button>
                 <img
-                  src={row.track.artworkUrl}
+                  src={row.track.raw.img_medium_url || row.track.raw.img_url || row.track.artworkUrl}
                   alt={`${row.track.title} artwork`}
                   loading="lazy"
                   onError={(event) => {

@@ -40,6 +40,11 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
       return;
     }
 
+    if (window.matchMedia("(max-width: 980px)").matches) {
+      setHeaderHidden(false);
+      return;
+    }
+
     lastScrollY.current = window.scrollY;
 
     const updateHeaderVisibility = () => {
