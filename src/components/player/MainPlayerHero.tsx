@@ -108,9 +108,10 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 }}
                 onVolumeChange={setVolume}
               />
+              <div className="hero-player__vote-divider" />
+              <MusicLinks track={currentTrack} />
             </div>
 
-            <MusicLinks track={currentTrack} />
             <div className="hero-player__utility-row">
               <button
                 type="button"
