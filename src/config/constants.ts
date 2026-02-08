@@ -9,6 +9,7 @@ export const POLL_INTERVAL_MS = 12000;
 export const OPTIONAL_WORKER_PROXY_URL: string = "";
 export const OPTIONAL_EPISODE_ARCHIVE_URL: string =
   "https://hits93-episode-archive.viktor-elias.workers.dev";
+export const CONTACT_FORM_ENDPOINT = "https://formsubmit.co/ajax/contact@hits93.com";
 
 export const HISTORY_PAGE_SIZE = 50;
 export const HOME_RECENT_CARD_COUNT = 5;

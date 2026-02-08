@@ -1,6 +1,55 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { submitContactForm } from "../services/contactService";
+
+const MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024;
 
 export function ContactPage(): JSX.Element {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState("");
+  const [message, setMessage] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [company, setCompany] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState(false);
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (file && file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setStatus("Please upload a file smaller than 25 MB.");
+      setStatusError(true);
+      return;
+    }
+
+    setSubmitting(true);
+    setStatus(null);
+    setStatusError(false);
+
+    try {
+      const responseMessage = await submitContactForm({
+        name,
+        email,
+        topic,
+        message,
+        file,
+        company
+      });
+      setStatus(responseMessage || "Thanks, your message has been sent.");
+      setStatusError(false);
+      setMessage("");
+      setFile(null);
+      setCompany("");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to send your message right now.");
+      setStatusError(true);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="container">
       <section className="page-section contact-page">
@@ -42,23 +91,49 @@ export function ContactPage(): JSX.Element {
 
         <form
           className="contact-form"
-          action="mailto:contact@hits93.com"
           method="post"
           encType="multipart/form-data"
+          onSubmit={onSubmit}
         >
           <label className="field" htmlFor="contact-name">
             <span>Name</span>
-            <input id="contact-name" name="name" type="text" required />
+            <input
+              id="contact-name"
+              name="name"
+              type="text"
+              required
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value);
+              }}
+            />
           </label>
 
           <label className="field" htmlFor="contact-email">
             <span>Email</span>
-            <input id="contact-email" name="email" type="email" required />
+            <input
+              id="contact-email"
+              name="email"
+              type="email"
+              required
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+              }}
+            />
           </label>
 
           <label className="field" htmlFor="contact-topic">
             <span>Topic</span>
-            <select id="contact-topic" name="topic" required>
+            <select
+              id="contact-topic"
+              name="topic"
+              required
+              value={topic}
+              onChange={(event) => {
+                setTopic(event.target.value);
+              }}
+            >
               <option value="">Choose one</option>
               <option value="general">General feedback</option>
               <option value="music">Music submission (FLAC preferred)</option>
@@ -69,18 +144,54 @@ export function ContactPage(): JSX.Element {
 
           <label className="field" htmlFor="contact-file">
             <span>File upload (optional)</span>
-            <input id="contact-file" name="file" type="file" accept=".flac,.wav,.aiff,.mp3,.m4a,.zip" />
+            <input
+              id="contact-file"
+              name="file"
+              type="file"
+              accept=".flac,.wav,.aiff,.mp3,.m4a,.zip"
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null);
+              }}
+            />
+          </label>
+
+          <label className="field sr-only" htmlFor="contact-company">
+            <span>Company</span>
+            <input
+              id="contact-company"
+              name="company"
+              type="text"
+              autoComplete="off"
+              tabIndex={-1}
+              value={company}
+              onChange={(event) => {
+                setCompany(event.target.value);
+              }}
+            />
           </label>
 
           <label className="field" htmlFor="contact-message">
             <span>Message</span>
-            <textarea id="contact-message" name="message" rows={5} required />
+            <textarea
+              id="contact-message"
+              name="message"
+              rows={5}
+              required
+              value={message}
+              onChange={(event) => {
+                setMessage(event.target.value);
+              }}
+            />
           </label>
 
-          <button type="submit" className="control-pill">Send Message</button>
+          <button type="submit" className="control-pill" disabled={submitting}>
+            {submitting ? "Sending..." : "Send Message"}
+          </button>
           <p className="status-inline">
-            Submissions are addressed to <a href="mailto:contact@hits93.com">contact@hits93.com</a>.
+            Secure submission over HTTPS with optional file upload. Messages go to{" "}
+            <a href="mailto:contact@hits93.com">contact@hits93.com</a>.
           </p>
+          {status && <p className={`status-inline ${statusError ? "status-inline--error" : ""}`}>{status}</p>}
         </form>
       </section>
     </div>
