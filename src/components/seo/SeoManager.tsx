@@ -116,18 +116,53 @@ function toAbsoluteAssetUrl(path: string): string {
   return new URL(path, window.location.origin).toString();
 }
 
+function formatEpisodeStamp(startMsToken: string, dateIso: string): string {
+  const startMs = Number(startMsToken);
+  if (Number.isFinite(startMs) && startMs > 0) {
+    const date = new Date(startMs);
+    const dateLabel = date.toLocaleDateString([], {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+    const timeLabel = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    });
+    return `${dateLabel} at ${timeLabel}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
+    const parsed = new Date(`${dateIso}T00:00:00`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString([], {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+  }
+
+  return "Episode";
+}
+
 function getRouteSeo(pathname: string): RouteSeo {
   if (pathname.startsWith("/schedule/programme/")) {
     const parts = pathname.split("/").filter(Boolean);
+    const dateIso = parts[2] || "";
+    const startMsToken = parts[3] || "";
     const rawSlug = parts[4] || "";
     const slug = resolveProgrammeSlug(rawSlug);
     const entry = getProgrammeCatalogEntry(slug);
     const programName = entry?.name ?? getProgrammeNameBySlug(slug, toTitleCase(slug) || "Program");
     const imageUrl = toAbsoluteAssetUrl(getProgrammeArtworkUrl(programName));
+    const episodeStamp = formatEpisodeStamp(startMsToken, dateIso);
 
     return {
-      title: `${programName} Episode | ${SITE_NAME}`,
-      description: `Tracks played and episode details for ${programName} on Hits 93 Toronto.`,
+      title: `${programName} Episode | ${episodeStamp} | ${SITE_NAME}`,
+      description: `Tracks played and episode details for ${programName} (${episodeStamp}) on Hits 93 Toronto.`,
       imageUrl
     };
   }
