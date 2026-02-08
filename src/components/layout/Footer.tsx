@@ -47,16 +47,18 @@ export function Footer({ withMiniPlayer = false }: FooterProps): JSX.Element {
             <Link to="/terms">Terms</Link>
             <Link to="/contact">Contact</Link>
           </div>
-          <p>Follow Us:</p>
-          <div className="site-footer__socials">
-            {SOCIAL_LINKS.map((social) => {
-              const Icon = social.icon;
-              return (
-                <a key={social.label} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label}>
-                  <Icon />
-                </a>
-              );
-            })}
+          <div className="site-footer__follow">
+            <p>Follow Us:</p>
+            <div className="site-footer__socials">
+              {SOCIAL_LINKS.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a key={social.label} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label}>
+                    <Icon />
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
