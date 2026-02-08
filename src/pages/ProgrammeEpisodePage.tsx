@@ -53,6 +53,14 @@ function formatMinutesAgo(trackStartMs: number): string {
   }
 
   const minutes = Math.max(1, Math.floor(deltaMs / (60 * 1000)));
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    if (hours <= 1) {
+      return "Over an hour ago";
+    }
+    return `Over ${hours} hours ago`;
+  }
+
   return `${minutes} min ago`;
 }
 

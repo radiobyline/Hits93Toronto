@@ -97,36 +97,35 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
               )}
 
               <div className="hero-player__vote-divider" />
-              <div className="hero-player__utility-row hero-player__utility-row--embedded">
-                <button
-                  type="button"
-                  className="control-pill control-pill--request control-pill--request-primary"
-                  onClick={() => {
-                    setRequestModalOpen(true);
-                  }}
-                >
-                  <RequestIcon />
-                  <span>Request a Song</span>
-                </button>
-                <Link to="/jukebox" className="control-pill control-pill--small">
-                  Open Jukebox
-                </Link>
-              </div>
+              <PlayerControls
+                isPlaying={isPlaying}
+                isMuted={isMuted}
+                volume={volume}
+                isBuffering={isBuffering}
+                onTogglePlayback={togglePlayback}
+                onToggleMuted={() => {
+                  setMuted(!isMuted);
+                }}
+                onVolumeChange={setVolume}
+              />
             </div>
 
-            <PlayerControls
-              isPlaying={isPlaying}
-              isMuted={isMuted}
-              volume={volume}
-              isBuffering={isBuffering}
-              onTogglePlayback={togglePlayback}
-              onToggleMuted={() => {
-                setMuted(!isMuted);
-              }}
-              onVolumeChange={setVolume}
-            />
-
             <MusicLinks track={currentTrack} />
+            <div className="hero-player__utility-row">
+              <button
+                type="button"
+                className="control-pill control-pill--request control-pill--request-primary"
+                onClick={() => {
+                  setRequestModalOpen(true);
+                }}
+              >
+                <RequestIcon />
+                <span>Request a Song</span>
+              </button>
+              <Link to="/jukebox" className="control-pill control-pill--small">
+                Open Jukebox
+              </Link>
+            </div>
 
             {(metadataError || playbackError) && (
               <p className="status-inline status-inline--error">{metadataError ?? playbackError}</p>
