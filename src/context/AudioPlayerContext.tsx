@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode
 } from "react";
-import { POLL_INTERVAL_MS, STREAM_URL_HTTPS } from "../config/constants";
+import { DEFAULT_ARTWORK_URL, POLL_INTERVAL_MS, STREAM_URL_HTTPS } from "../config/constants";
 import { fetchHistory, shapeHistoryForPlayer } from "../services/historyService";
 import { emitStopPreviews } from "../services/previewBus";
 import type { Track } from "../types";
@@ -35,6 +35,59 @@ interface AudioPlayerContextValue {
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextValue | undefined>(undefined);
+
+function safeSetActionHandler(action: MediaSessionAction, handler: MediaSessionActionHandler | null): void {
+  try {
+    navigator.mediaSession?.setActionHandler?.(action, handler);
+  } catch {
+    // Safari may throw for unsupported handlers; ignore.
+  }
+}
+
+function safeSetMediaMetadata(track: Track | null): void {
+  if (!("mediaSession" in navigator)) {
+    return;
+  }
+
+  const MediaMetadataCtor = (window as Window & { MediaMetadata?: typeof MediaMetadata }).MediaMetadata;
+  if (!MediaMetadataCtor) {
+    return;
+  }
+
+  const artworkUrl = track?.artworkUrl || DEFAULT_ARTWORK_URL;
+  let resolvedArtworkUrl = artworkUrl;
+  try {
+    resolvedArtworkUrl = new URL(artworkUrl, window.location.href).toString();
+  } catch {
+    // no-op
+  }
+
+  const normalizedArtworkUrl = resolvedArtworkUrl.toLowerCase();
+  const artworkType = normalizedArtworkUrl.endsWith(".png")
+    ? "image/png"
+    : normalizedArtworkUrl.endsWith(".svg")
+      ? "image/svg+xml"
+      : normalizedArtworkUrl.endsWith(".webp")
+        ? "image/webp"
+        : normalizedArtworkUrl.endsWith(".avif")
+          ? "image/avif"
+          : "image/jpeg";
+
+  try {
+    navigator.mediaSession.metadata = new MediaMetadataCtor({
+      title: track?.title || "Hits 93 Toronto",
+      artist: track?.artist || "Live stream",
+      album: track?.album || "",
+      artwork: [
+        { src: resolvedArtworkUrl, sizes: "512x512", type: artworkType },
+        { src: resolvedArtworkUrl, sizes: "256x256", type: artworkType },
+        { src: resolvedArtworkUrl, sizes: "96x96", type: artworkType }
+      ]
+    });
+  } catch {
+    // no-op
+  }
+}
 
 function computeNextRefreshDelay(currentTrack: Track | null): number {
   if (!currentTrack?.endMs) {
@@ -380,6 +433,42 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const refreshMetadata = useCallback(async () => {
     await loadMetadataOnce();
   }, [loadMetadataOnce]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) {
+      return;
+    }
+
+    safeSetMediaMetadata(currentTrack);
+
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    } catch {
+      // no-op
+    }
+  }, [currentTrack, isPlaying]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) {
+      return;
+    }
+
+    safeSetActionHandler("play", () => {
+      void play();
+    });
+    safeSetActionHandler("pause", () => {
+      pause();
+    });
+    safeSetActionHandler("stop", () => {
+      pause();
+    });
+
+    // Disable unused transport controls for a live stream.
+    safeSetActionHandler("seekbackward", null);
+    safeSetActionHandler("seekforward", null);
+    safeSetActionHandler("previoustrack", null);
+    safeSetActionHandler("nexttrack", null);
+  }, [pause, play]);
 
   const value = useMemo(
     () => ({

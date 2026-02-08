@@ -10,7 +10,7 @@ export function AppShell(): JSX.Element {
   const location = useLocation();
 
   const isHomeRoute = location.pathname === "/";
-  const showMiniPlayer = true;
+  const showMiniPlayer = !isHomeRoute;
 
   return (
     <div className={`app-root ${showMiniPlayer ? "app-root--with-mini" : ""}`}>
