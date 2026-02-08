@@ -187,7 +187,12 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
       >
         <header className="modal__header">
           <h2 id="request-modal-title">Request a Song</h2>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close request form">
+          <button
+            type="button"
+            className="icon-button icon-button--modal-close"
+            onClick={onClose}
+            aria-label="Close request form"
+          >
             Close
           </button>
         </header>

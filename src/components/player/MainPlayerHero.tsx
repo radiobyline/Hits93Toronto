@@ -9,7 +9,6 @@ import { ProgrammeBlock } from "../schedule/ProgrammeBlock";
 import { LiveIndicator } from "./LiveIndicator";
 import { MusicLinks } from "./MusicLinks";
 import { PlayerControls } from "./PlayerControls";
-import { AuroraSweepFrame } from "./AuroraSweepFrame";
 import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
 
 interface MainPlayerHeroProps {
@@ -19,7 +18,6 @@ interface MainPlayerHeroProps {
 
 export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHeroProps): JSX.Element {
   const {
-    analyserNode,
     currentTrack,
     isPlaying,
     isMuted,
@@ -52,7 +50,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                   img.src = DEFAULT_ARTWORK_URL;
                 }}
               />
-              <AuroraSweepFrame analyserNode={analyserNode} />
             </div>
           </div>
 
@@ -63,38 +60,59 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
             <p className="hero-player__artist">{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
             {currentTrack?.album && <p className="hero-player__album">Album: {currentTrack.album}</p>}
 
-            {currentTrack?.allMusicId && (
-              <div className="hero-player__vote-inline">
-                <p>Rate</p>
-                <div className="hero-player__vote-inline-buttons">
-                  <button
-                    type="button"
-                    className="control-pill control-pill--small"
-                    disabled={!canVote}
-                    onClick={() => {
-                      castVote("up");
-                    }}
-                    aria-label="Like current track"
-                  >
-                    <ThumbUpIcon />
-                    <span>Like</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="control-pill control-pill--small"
-                    disabled={!canVote}
-                    onClick={() => {
-                      castVote("down");
-                    }}
-                    aria-label="Dislike current track"
-                  >
-                    <ThumbDownIcon />
-                    <span>Dislike</span>
-                  </button>
-                </div>
-                <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
+            <div className="hero-player__vote-inline">
+              <p>Rate</p>
+              {currentTrack?.allMusicId ? (
+                <>
+                  <div className="hero-player__vote-inline-buttons">
+                    <button
+                      type="button"
+                      className="control-pill control-pill--small"
+                      disabled={!canVote}
+                      onClick={() => {
+                        castVote("up");
+                      }}
+                      aria-label="Like current track"
+                    >
+                      <ThumbUpIcon />
+                      <span>Like</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="control-pill control-pill--small"
+                      disabled={!canVote}
+                      onClick={() => {
+                        castVote("down");
+                      }}
+                      aria-label="Dislike current track"
+                    >
+                      <ThumbDownIcon />
+                      <span>Dislike</span>
+                    </button>
+                  </div>
+                  <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
+                </>
+              ) : (
+                <p className="status-inline">Rating is unavailable for this track right now.</p>
+              )}
+
+              <div className="hero-player__vote-divider" />
+              <div className="hero-player__utility-row hero-player__utility-row--embedded">
+                <button
+                  type="button"
+                  className="control-pill control-pill--request control-pill--request-primary"
+                  onClick={() => {
+                    setRequestModalOpen(true);
+                  }}
+                >
+                  <RequestIcon />
+                  <span>Request a Song</span>
+                </button>
+                <Link to="/jukebox" className="control-pill control-pill--small">
+                  Open Jukebox
+                </Link>
               </div>
-            )}
+            </div>
 
             <PlayerControls
               isPlaying={isPlaying}
@@ -107,22 +125,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
               }}
               onVolumeChange={setVolume}
             />
-
-            <div className="hero-player__utility-row">
-              <button
-                type="button"
-                className="control-pill control-pill--request control-pill--request-primary"
-                onClick={() => {
-                  setRequestModalOpen(true);
-                }}
-              >
-                <RequestIcon />
-                <span>Request a Song</span>
-              </button>
-              <Link to="/jukebox" className="control-pill control-pill--small">
-                Open Jukebox
-              </Link>
-            </div>
 
             <MusicLinks track={currentTrack} />
 

@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { FacebookIcon, InstagramIcon, YouTubeIcon } from "../ui/Icons";
 import { useScheduleSnapshot } from "../../hooks/useScheduleSnapshot";
 import { formatClock } from "../../utils/time";
 
@@ -43,91 +42,81 @@ export function ProgrammeBlock(): JSX.Element {
 
       {!loading && !error && (
         <>
-          <article className="programme-block__current">
-            <p className="programme-block__label">Now Playing</p>
-            {current ? (
-              <h3>
-                <Link to={`/schedule/programmes/${current.slug}`}>{current.name}</Link>
-              </h3>
-            ) : (
-              <h3>Auto rotation</h3>
-            )}
-            <p>{current?.description ?? "Schedule currently unavailable; using fallback rotation."}</p>
-            {current && (
-              <p className="programme-block__time">
-                {formatClock(current.startMs)} to {formatClock(current.endMs)}
+          <div className="programme-block__flow">
+            <article className="programme-block__current">
+              <p className="programme-block__label">Now Playing</p>
+              {current ? (
+                <h3>
+                  <Link to={`/schedule/programmes/${current.slug}`}>{current.name}</Link>
+                </h3>
+              ) : (
+                <h3>Auto rotation</h3>
+              )}
+              <p>{current?.description ?? "Schedule currently unavailable; using fallback rotation."}</p>
+              {current && (
+                <p className="programme-block__time">
+                  {formatClock(current.startMs)} to {formatClock(current.endMs)}
+                </p>
+              )}
+              <div className="programme-progress" role="progressbar" aria-valuenow={progressPercent}>
+                <span style={{ width: `${progressPercent.toFixed(2)}%` }} />
+              </div>
+              <p className="programme-block__remaining">
+                {current ? formatEndsIn(remainingMs) : "Ends in --"}
               </p>
-            )}
-            <div className="programme-progress" role="progressbar" aria-valuenow={progressPercent}>
-              <span style={{ width: `${progressPercent.toFixed(2)}%` }} />
-            </div>
-            <p className="programme-block__remaining">
-              {current ? formatEndsIn(remainingMs) : "Ends in --"}
-            </p>
-          </article>
+            </article>
 
-          <article className="programme-block__next">
-            <p className="programme-block__label">Up Next</p>
-            {next ? (
-              <h3>
-                <Link to={`/schedule/programmes/${next.slug}`}>{next.name}</Link>
-              </h3>
-            ) : (
-              <h3>TBC</h3>
-            )}
-            <p>{next?.description ?? "Waiting for schedule data."}</p>
-            <p className="programme-block__time">
-              {next ? `${formatClock(next.startMs)} to ${formatClock(next.endMs)}` : "Starts soon"}
-            </p>
-          </article>
+            <article className="programme-block__next">
+              <p className="programme-block__label">Up Next</p>
+              {next ? (
+                <h3>
+                  <Link to={`/schedule/programmes/${next.slug}`}>{next.name}</Link>
+                </h3>
+              ) : (
+                <h3>TBC</h3>
+              )}
+              <p>{next?.description ?? "Waiting for schedule data."}</p>
+              <p className="programme-block__time">
+                {next ? `${formatClock(next.startMs)} to ${formatClock(next.endMs)}` : "Starts soon"}
+              </p>
+            </article>
+          </div>
 
           <div className="programme-block__links">
             <Link to="/schedule" className="control-pill control-pill--small">
               <span className="label-desktop">Full Schedule</span>
               <span className="label-mobile">Schedule</span>
             </Link>
-            <Link to="/jukebox" className="control-pill control-pill--small">
-              <span className="label-desktop">Open Jukebox</span>
-              <span className="label-mobile">Jukebox</span>
-            </Link>
           </div>
 
-          <section className="programme-block__notes">
-            <h3>Listening Info</h3>
-            <ul>
-              <li>Independent Toronto station, streaming worldwide.</li>
-              <li>Press play and allow a moment to buffer. If needed, refresh once.</li>
-              <li>
-                Issues? Visit <Link to="/contact">Contact</Link>.
-              </li>
-              <li>Stream quality up to 320 kbps. Headphones or speakers recommended.</li>
-              <li>
-                Follow:
-                <span className="programme-block__socials">
-                  <a href="https://instagram.com/Hits93Toronto" target="_blank" rel="noreferrer" aria-label="Instagram">
-                    <InstagramIcon />
-                  </a>
-                  <a href="https://facebook.com/Hits93TO" target="_blank" rel="noreferrer" aria-label="Facebook">
-                    <FacebookIcon />
-                  </a>
-                  <a href="https://youtube.com/@Hits93Toronto" target="_blank" rel="noreferrer" aria-label="YouTube">
-                    <YouTubeIcon />
-                  </a>
-                </span>
-              </li>
-              <li>
-                Request songs and shoutouts via <Link to="/jukebox">Jukebox</Link>.
-              </li>
-              <li>
-                Rate tracks or send feedback via <Link to="/contact">Contact</Link>.
-              </li>
-              <li>
+          <section className="programme-block__cta-grid">
+            <article className="programme-block__cta">
+              <h3>Music Submissions</h3>
+              <p>
+                <Link to="/schedule/programmes/next-up">
+                  <em>Next Up</em>
+                </Link>{" "}
+                and{" "}
+                <Link to="/schedule/programmes/next-wave">
+                  <em>Next Wave</em>
+                </Link>{" "}
+                air daily and are intended to help smaller artists reach a broader audience.
+              </p>
+              <p>
+                <Link to="/contact">Submit through Contact Us</Link>.
+              </p>
+            </article>
+
+            <article className="programme-block__cta">
+              <h3>Support, Sponsorships & Partnerships</h3>
+              <p>Help keep Hits 93 Toronto growing through donations, sponsorships, and partnerships.</p>
+              <p>
                 <a href="https://paypal.me/Hits93Toronto" target="_blank" rel="noreferrer">
-                  Support the station
-                </a>
-                .
-              </li>
-            </ul>
+                  Support on PayPal
+                </a>{" "}
+                or <Link to="/contact">contact us for sponsorship details</Link>.
+              </p>
+            </article>
           </section>
         </>
       )}
