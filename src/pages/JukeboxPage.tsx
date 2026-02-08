@@ -187,6 +187,10 @@ export function JukeboxPage(): JSX.Element {
                     <img
                       src={track.artworkUrl || DEFAULT_ARTWORK_URL}
                       alt={`${track.title} artwork`}
+                      width={64}
+                      height={64}
+                      loading="lazy"
+                      decoding="async"
                       onError={(event) => {
                         event.currentTarget.src = DEFAULT_ARTWORK_URL;
                       }}

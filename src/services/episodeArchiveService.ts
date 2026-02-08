@@ -68,7 +68,7 @@ export async function fetchEpisodeArchiveTracks(
   });
 
   if (response.status === 404) {
-    return [];
+    return null;
   }
 
   if (!response.ok) {

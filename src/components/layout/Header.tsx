@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import type { ThemeMode } from "../../hooks/useTheme";
 import { resolvePublicAssetUrl } from "../../utils/assets";
@@ -22,12 +22,58 @@ const NAV_ITEMS = [
 export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  const isTicking = useRef(false);
   const isDark = theme === "dark";
-  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.svg");
+  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.png");
 
   useEffect(() => {
     setMenuOpen(false);
+    setHeaderHidden(false);
+    lastScrollY.current = window.scrollY;
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (menuOpen) {
+      setHeaderHidden(false);
+      return;
+    }
+
+    lastScrollY.current = window.scrollY;
+
+    const updateHeaderVisibility = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY.current;
+      const isNearTop = currentY < 24;
+
+      if (isNearTop) {
+        setHeaderHidden(false);
+      } else if (delta > 4 && currentY > 110) {
+        setHeaderHidden(true);
+      } else if (delta < -4) {
+        setHeaderHidden(false);
+      }
+
+      lastScrollY.current = currentY;
+      isTicking.current = false;
+    };
+
+    const onScroll = () => {
+      if (isTicking.current) {
+        return;
+      }
+
+      isTicking.current = true;
+      window.requestAnimationFrame(updateHeaderVisibility);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [menuOpen]);
 
   const navLinks = NAV_ITEMS.map((item) => (
     <NavLink
@@ -45,7 +91,7 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   ));
 
   return (
-    <header className="site-header">
+    <header className={`site-header ${headerHidden ? "site-header--hidden" : ""}`}>
       <div className="site-header__inner container container--hero">
         <button
           type="button"
@@ -62,7 +108,14 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
 
         <div className="brand-mark">
           <NavLink to="/" className="brand-mark__link" aria-label="Go to Live">
-            <img className="brand-mark__logo" src={logoSrc} alt="HiTS 93 Toronto" />
+            <img
+              className="brand-mark__logo"
+              src={logoSrc}
+              alt="HiTS 93 Toronto"
+              width={80}
+              height={54}
+              decoding="async"
+            />
           </NavLink>
         </div>
 
@@ -83,37 +136,36 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
         </div>
       </div>
 
-      <div
-        className={`site-nav-drawer ${menuOpen ? "site-nav-drawer--open" : ""}`}
-        aria-hidden={!menuOpen}
-      >
-        <button
-          type="button"
-          className="site-nav-drawer__backdrop"
-          onClick={() => {
-            setMenuOpen(false);
-          }}
-          aria-label="Close menu"
-        />
-        <div className="site-nav-drawer__panel" id="mobile-nav">
-          <div className="site-nav-drawer__header">
-            <p>Menu</p>
-            <button
-              type="button"
-              className="site-header__menu-toggle"
-              onClick={() => {
-                setMenuOpen(false);
-              }}
-              aria-label="Close menu"
-            >
-              <CloseIcon />
-            </button>
+      {menuOpen && (
+        <div className="site-nav-drawer site-nav-drawer--open">
+          <button
+            type="button"
+            className="site-nav-drawer__backdrop"
+            onClick={() => {
+              setMenuOpen(false);
+            }}
+            aria-label="Close menu"
+          />
+          <div className="site-nav-drawer__panel" id="mobile-nav">
+            <div className="site-nav-drawer__header">
+              <p>Menu</p>
+              <button
+                type="button"
+                className="site-header__menu-toggle"
+                onClick={() => {
+                  setMenuOpen(false);
+                }}
+                aria-label="Close menu"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <nav className="site-nav site-nav--mobile" aria-label="Mobile primary">
+              {navLinks}
+            </nav>
           </div>
-          <nav className="site-nav site-nav--mobile" aria-label="Mobile primary">
-            {navLinks}
-          </nav>
         </div>
-      </div>
+      )}
     </header>
   );
 }

@@ -108,6 +108,9 @@ export function ProgrammePage(): JSX.Element {
             src={artworkUrl}
             alt={`${programmeName} artwork`}
             className="programme-page__artwork"
+            width={600}
+            height={600}
+            decoding="async"
             onError={(event) => {
               event.currentTarget.src = DEFAULT_ARTWORK_URL;
             }}

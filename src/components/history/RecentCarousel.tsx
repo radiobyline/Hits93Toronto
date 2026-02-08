@@ -25,6 +25,9 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
               alt={`${track.title} artwork`}
               loading="lazy"
               className="recent-card__image"
+              width={320}
+              height={320}
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.src = DEFAULT_ARTWORK_URL;
               }}

@@ -248,7 +248,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
             matchedEpisode.slug
           );
           tracks =
-            archivedTracks !== null
+            archivedTracks && archivedTracks.length > 0
               ? archivedTracks
               : await fetchHistoryForWindow(matchedEpisode.startMs, matchedEpisode.endMs);
         } catch (historyRequestError) {
@@ -304,6 +304,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
                 src={state.episode.artworkUrl}
                 alt={`${state.episode.name} artwork`}
                 className="programme-episode__artwork"
+                width={600}
+                height={600}
+                decoding="async"
                 onError={(event) => {
                   event.currentTarget.src = DEFAULT_ARTWORK_URL;
                 }}
@@ -361,6 +364,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
                         src={track.artworkUrl}
                         alt={`${track.title} artwork`}
                         loading="lazy"
+                        width={80}
+                        height={80}
+                        decoding="async"
                         onError={(event) => {
                           event.currentTarget.src = DEFAULT_ARTWORK_URL;
                         }}

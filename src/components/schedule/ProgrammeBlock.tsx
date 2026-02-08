@@ -58,7 +58,14 @@ export function ProgrammeBlock(): JSX.Element {
                   {formatClock(current.startMs)} to {formatClock(current.endMs)}
                 </p>
               )}
-              <div className="programme-progress" role="progressbar" aria-valuenow={progressPercent}>
+              <div
+                className="programme-progress"
+                role="progressbar"
+                aria-label="Current program progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progressPercent}
+              >
                 <span style={{ width: `${progressPercent.toFixed(2)}%` }} />
               </div>
               <p className="programme-block__remaining">

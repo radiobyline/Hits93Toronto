@@ -23,6 +23,8 @@
   --radius-md: 13px;
   --radius-sm: 9px;
   --header-height: 84px;
+  --chrome-bg: color-mix(in srgb, var(--bg), transparent 12%);
+  --chrome-text: var(--text);
 }
 
 :root[data-theme="dark"] {
@@ -40,6 +42,8 @@
   --danger: #f46079;
   --shadow-soft: 0 24px 50px rgba(0, 8, 21, 0.44);
   --shadow-card: 0 14px 30px rgba(0, 0, 0, 0.45);
+  --chrome-bg: color-mix(in srgb, var(--bg-contrast), transparent 18%);
+  --chrome-text: var(--text-inverse);
 }
 
 * {
@@ -130,7 +134,17 @@ h4 {
   z-index: 40;
   border-bottom: 1px solid var(--surface-border);
   backdrop-filter: blur(16px);
-  background: color-mix(in srgb, var(--bg), transparent 12%);
+  background: var(--chrome-bg);
+  transition: transform 220ms ease, background-color 180ms ease;
+  will-change: transform;
+}
+
+.site-header--hidden {
+  transform: translate3d(0, calc(-1 * var(--header-height) - 2px), 0);
+}
+
+.site-header:focus-within {
+  transform: translate3d(0, 0, 0);
 }
 
 .site-header__inner {
@@ -246,7 +260,7 @@ h4 {
   position: fixed;
   inset: 0;
   z-index: 60;
-  display: none;
+  display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 78vw);
   opacity: 0;
   pointer-events: none;
@@ -1554,8 +1568,8 @@ h4 {
 
 .site-footer {
   border-top: 1px solid var(--surface-border);
-  background: color-mix(in srgb, var(--bg-contrast), transparent 18%);
-  color: var(--text-inverse);
+  background: var(--chrome-bg);
+  color: var(--chrome-text);
   padding: 1rem 0;
 }
 
@@ -1602,7 +1616,7 @@ h4 {
 
 .site-footer__legal-links a,
 .site-footer__llm-link {
-  color: var(--text-inverse);
+  color: var(--chrome-text);
   text-decoration: none;
   font-size: 0.8rem;
 }
@@ -1610,7 +1624,7 @@ h4 {
 .site-footer__llm-link {
   margin-top: auto;
   font-size: 0.68rem;
-  color: color-mix(in srgb, var(--text-inverse), transparent 26%);
+  color: color-mix(in srgb, var(--chrome-text), transparent 26%);
 }
 
 .site-footer__llm-link--mobile {
@@ -1636,12 +1650,12 @@ h4 {
 }
 
 .site-footer__socials a {
-  color: var(--text-inverse);
+  color: var(--chrome-text);
   text-decoration: none;
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--text-inverse), transparent 62%);
+  border: 1px solid color-mix(in srgb, var(--chrome-text), transparent 62%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1811,6 +1825,12 @@ h4 {
     border-top: 1px solid var(--surface-border);
     padding-left: 0;
     padding-top: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
   }
 }
 
