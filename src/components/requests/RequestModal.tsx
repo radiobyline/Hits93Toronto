@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { DEFAULT_ARTWORK_URL } from "../../config/constants";
+import { useAudioPlayer } from "../../context/AudioPlayerContext";
+import { fetchApplePreviewUrl } from "../../services/previewService";
 import { requestService } from "../../services/requestService";
 import type { RequestLibraryTrack } from "../../types";
+
+const PREVIEW_DURATION_MS = 15000;
 
 interface RequestModalProps {
   isOpen: boolean;
@@ -8,14 +13,21 @@ interface RequestModalProps {
 }
 
 export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Element | null {
+  const { isPlaying, pause } = useAudioPlayer();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RequestLibraryTrack[]>([]);
+  const [searching, setSearching] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
   const [requesterName, setRequesterName] = useState("");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<string>("");
-  const [searching, setSearching] = useState(false);
+  const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [previewCache, setPreviewCache] = useState<Record<number, string | null>>({});
+  const [previewingTrackId, setPreviewingTrackId] = useState<number | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<number | null>(null);
+
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<number | undefined>();
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,9 +63,112 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
     };
   }, [isOpen, query]);
 
+  useEffect(() => {
+    return () => {
+      if (previewTimeoutRef.current) {
+        window.clearTimeout(previewTimeoutRef.current);
+      }
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      return;
+    }
+
+    if (previewTimeoutRef.current) {
+      window.clearTimeout(previewTimeoutRef.current);
+    }
+    previewAudioRef.current?.pause();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewingTrackId(null);
+  }, [isOpen]);
+
   const selectedTrack = useMemo(() => {
     return results.find((track) => track.id === selectedTrackId) ?? null;
   }, [results, selectedTrackId]);
+
+  const stopPreview = () => {
+    if (previewTimeoutRef.current) {
+      window.clearTimeout(previewTimeoutRef.current);
+    }
+    previewAudioRef.current?.pause();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewingTrackId(null);
+  };
+
+  const startPreview = async (track: RequestLibraryTrack) => {
+    stopPreview();
+    if (isPlaying) {
+      pause();
+    }
+
+    const cached = previewCache[track.id];
+    if (cached === undefined) {
+      setPreviewLoadingId(track.id);
+      const previewUrl = await fetchApplePreviewUrl(track.artist, track.title);
+      setPreviewCache((previous) => ({
+        ...previous,
+        [track.id]: previewUrl
+      }));
+      setPreviewLoadingId(null);
+
+      if (!previewUrl) {
+        setStatus("No preview available for this track right now.");
+        return;
+      }
+
+      const audio = new Audio(previewUrl);
+      previewAudioRef.current = audio;
+      setPreviewingTrackId(track.id);
+      void audio.play();
+      previewTimeoutRef.current = window.setTimeout(() => {
+        stopPreview();
+      }, PREVIEW_DURATION_MS);
+      return;
+    }
+
+    if (!cached) {
+      setStatus("No preview available for this track right now.");
+      return;
+    }
+
+    const audio = new Audio(cached);
+    previewAudioRef.current = audio;
+    setPreviewingTrackId(track.id);
+    void audio.play();
+    previewTimeoutRef.current = window.setTimeout(() => {
+      stopPreview();
+    }, PREVIEW_DURATION_MS);
+  };
+
+  const submitRequest = async () => {
+    if (!selectedTrack) {
+      setStatus("Choose a song first.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await requestService.submitRequest({
+        trackId: selectedTrack.id,
+        requesterName: requesterName.trim() || undefined,
+        message: message.trim() || undefined
+      });
+      setStatus(result.note);
+      if (result.accepted) {
+        setMessage("");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (!isOpen) {
     return null;
@@ -62,7 +177,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <div
-        className="modal"
+        className="modal modal--jukebox"
         role="dialog"
         aria-modal="true"
         aria-labelledby="request-modal-title"
@@ -79,109 +194,135 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
 
         <p className="status-inline">Search and request songs.</p>
 
-        <label className="field" htmlFor="request-search">
-          <span>Search</span>
-          <input
-            id="request-search"
-            type="search"
-            placeholder="Artist, song, or album"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-            }}
-          />
-        </label>
+        <div className="jukebox-page__layout jukebox-page__layout--modal">
+          <section className="jukebox-page__search">
+            <label className="field" htmlFor="request-search">
+              <span>Search</span>
+              <input
+                id="request-search"
+                type="search"
+                placeholder="Artist, song, or album"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
+              />
+            </label>
 
-        <div className="request-results" role="listbox" aria-label="Track results">
-          {searching && <p className="status-inline">Searching...</p>}
-          {!searching && !results.length && <p className="status-inline">No matching tracks found.</p>}
+            <p className="status-inline">Preview clips provided where available.</p>
 
-          {results.map((track) => (
+            <div className="jukebox-results" role="listbox" aria-label="Track results">
+              {searching && <p className="status-inline">Searching...</p>}
+              {!searching && !results.length && <p className="status-inline">No matching tracks found.</p>}
+
+              {results.map((track) => (
+                <article key={track.id} className="jukebox-result">
+                  <button
+                    type="button"
+                    className={`jukebox-result__select ${
+                      selectedTrackId === track.id ? "jukebox-result__select--active" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedTrackId(track.id);
+                    }}
+                  >
+                    <img
+                      src={track.artworkUrl || DEFAULT_ARTWORK_URL}
+                      alt={`${track.title} artwork`}
+                      onError={(event) => {
+                        event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                      }}
+                    />
+                    <div>
+                      <strong>{track.title}</strong>
+                      <span>{track.artist}</span>
+                      {track.album && <span>Album: {track.album}</span>}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small"
+                    disabled={previewLoadingId === track.id}
+                    onClick={() => {
+                      if (previewingTrackId === track.id) {
+                        stopPreview();
+                        return;
+                      }
+                      void startPreview(track);
+                    }}
+                  >
+                    {previewingTrackId === track.id
+                      ? "Stop preview"
+                      : previewLoadingId === track.id
+                        ? "Loading preview..."
+                        : "Preview"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="jukebox-page__request">
+            <h3>Request a Song</h3>
+            <p className="status-inline">
+              Requests are automatic. Shoutouts are accepted now and will expand in future updates.
+            </p>
+            <p className="status-inline">Choose a song from Search before sending your request.</p>
+
+            <label className="field" htmlFor="request-track">
+              <span>Selected Song</span>
+              <input
+                id="request-track"
+                type="text"
+                value={selectedTrack ? `${selectedTrack.artist} - ${selectedTrack.title}` : ""}
+                readOnly
+                placeholder="Choose a song"
+              />
+            </label>
+
+            <label className="field" htmlFor="requester-name">
+              <span>Your name (optional)</span>
+              <input
+                id="requester-name"
+                type="text"
+                value={requesterName}
+                onChange={(event) => {
+                  setRequesterName(event.target.value);
+                }}
+              />
+            </label>
+
+            <label className="field" htmlFor="request-message">
+              <span>Shoutout (optional)</span>
+              <textarea
+                id="request-message"
+                rows={3}
+                placeholder="Add a message"
+                value={message}
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                }}
+              />
+            </label>
+
             <button
-              key={track.id}
               type="button"
-              className={`request-result ${track.id === selectedTrackId ? "request-result--selected" : ""}`}
+              className="control-pill control-pill--request-primary"
               onClick={() => {
-                setSelectedTrackId(track.id);
+                void submitRequest();
               }}
+              disabled={!selectedTrack || submitting}
             >
-              <strong>{track.title}</strong>
-              <span>{track.artist}</span>
+              {submitting ? "Sending request..." : "Send Request"}
             </button>
-          ))}
+
+            <p className="status-inline">Requests may play later in the day.</p>
+          </section>
         </div>
 
-        <label className="field" htmlFor="request-track">
-          <span>Selected Song</span>
-          <input
-            id="request-track"
-            type="text"
-            value={selectedTrack ? `${selectedTrack.artist} - ${selectedTrack.title}` : ""}
-            readOnly
-            placeholder="Choose a song"
-          />
-        </label>
-
-        <label className="field" htmlFor="requester-name">
-          <span>Your name (optional)</span>
-          <input
-            id="requester-name"
-            type="text"
-            value={requesterName}
-            onChange={(event) => {
-              setRequesterName(event.target.value);
-            }}
-          />
-        </label>
-
-        <label className="field" htmlFor="request-message">
-          <span>Shoutout (optional)</span>
-          <textarea
-            id="request-message"
-            rows={3}
-            placeholder="Add a message"
-            value={message}
-            onChange={(event) => {
-              setMessage(event.target.value);
-            }}
-          />
-        </label>
-
         <footer className="modal__footer">
-          <button
-            type="button"
-            className="control-pill"
-            disabled={!selectedTrack || submitting}
-            onClick={() => {
-              if (!selectedTrack) {
-                setStatus("Choose a song first.");
-                return;
-              }
-
-              setSubmitting(true);
-              void requestService
-                .submitRequest({
-                  trackId: selectedTrack.id,
-                  requesterName: requesterName.trim() || undefined,
-                  message: message.trim() || undefined
-                })
-                .then((result) => {
-                  setStatus(result.note);
-                  if (result.accepted) {
-                    setSelectedTrackId(null);
-                    setMessage("");
-                  }
-                })
-                .finally(() => {
-                  setSubmitting(false);
-                });
-            }}
-          >
-            {submitting ? "Sending request..." : "Send Request"}
-          </button>
           <p className="status-inline">{status}</p>
         </footer>
-        <p className="status-inline">Requests may play later in the day.</p>
       </div>
     </div>
   );

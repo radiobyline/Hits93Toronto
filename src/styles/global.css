@@ -313,6 +313,7 @@ h4 {
   display: grid;
   place-items: center;
   isolation: isolate;
+  overflow: visible;
 }
 
 .hero-player__artwork {
@@ -355,6 +356,64 @@ h4 {
   pointer-events: none;
 }
 
+.aurora-frame {
+  position: absolute;
+  inset: -1.8%;
+  border-radius: clamp(16px, 2vw, 26px);
+  pointer-events: none;
+  --aurora-energy: 0.4;
+  --aurora-glow: 12px;
+  --aurora-duration: 8s;
+  --aurora-segment: 22%;
+  --aurora-corner: 0.5;
+}
+
+.aurora-frame::before,
+.aurora-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.aurora-frame::before {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(120, 234, 206, calc(var(--aurora-corner) * 0.4)), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(97, 186, 255, calc(var(--aurora-corner) * 0.4)), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(161, 132, 255, calc(var(--aurora-corner) * 0.4)), transparent 34%),
+    radial-gradient(circle at 0% 100%, rgba(72, 218, 189, calc(var(--aurora-corner) * 0.4)), transparent 34%),
+    linear-gradient(132deg, rgba(101, 191, 255, 0.24), rgba(174, 143, 255, 0.18));
+  box-shadow: 0 0 var(--aurora-glow) rgba(104, 215, 210, 0.32);
+  opacity: clamp(0.24, calc(var(--aurora-energy) * 0.95), 0.86);
+}
+
+.aurora-frame::after {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent calc(100% - var(--aurora-segment)),
+    rgba(69, 222, 194, 0.24) calc(100% - var(--aurora-segment) + 2%),
+    rgba(89, 235, 160, 0.88) calc(100% - var(--aurora-segment) + 7%),
+    rgba(81, 212, 239, 0.92) calc(100% - var(--aurora-segment) + 12%),
+    rgba(117, 148, 255, 0.88) calc(100% - var(--aurora-segment) + 17%),
+    rgba(164, 126, 255, 0.84) calc(100% - var(--aurora-segment) + 23%),
+    transparent 100%
+  );
+  filter: blur(calc(var(--aurora-glow) * 0.27)) saturate(1.12);
+  opacity: clamp(0.22, calc(var(--aurora-energy) * 0.98), 0.9);
+  animation: auroraSweep var(--aurora-duration) linear infinite;
+}
+
+.aurora-frame--reduced::after {
+  animation: none;
+}
+
 .hero-player__meta {
   display: grid;
   align-content: center;
@@ -381,7 +440,14 @@ h4 {
 .hero-player__album {
   margin: 0;
   color: var(--text-muted);
-  font-size: clamp(0.95rem, 1.35vw, 1.1rem);
+  font-size: clamp(0.95rem, 1.35vw, 1.12rem);
+}
+
+.hero-player__artist {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.2vw, 1.72rem);
+  color: color-mix(in srgb, var(--text), var(--text-muted) 8%);
+  line-height: 1.15;
 }
 
 .hero-player__album {
@@ -456,6 +522,16 @@ h4 {
 
   100% {
     box-shadow: 0 0 0 0 rgba(255, 124, 67, 0);
+  }
+}
+
+@keyframes auroraSweep {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -1396,6 +1472,18 @@ h4 {
   gap: 0.85rem;
 }
 
+.modal--jukebox {
+  width: min(1060px, 100%);
+}
+
+.jukebox-page__layout--modal {
+  gap: 1rem;
+}
+
+.modal--jukebox .jukebox-page__request {
+  padding-left: 0.9rem;
+}
+
 .modal__header,
 .modal__footer {
   display: flex;
@@ -1464,6 +1552,10 @@ h4 {
   background: color-mix(in srgb, var(--bg-contrast), transparent 18%);
   color: var(--text-inverse);
   padding: 1rem 0;
+}
+
+.site-footer--with-mini {
+  padding-bottom: calc(6.4rem + env(safe-area-inset-bottom));
 }
 
 .site-footer__inner {
@@ -1776,6 +1868,10 @@ h4 {
     height: 110%;
   }
 
+  .aurora-frame {
+    inset: -1.4%;
+  }
+
   .hero-player__meta h2 {
     font-size: clamp(1.8rem, 8vw, 2.2rem);
   }
@@ -1849,8 +1945,8 @@ h4 {
     grid-template-areas: "center right";
   }
 
-  .site-footer {
-    padding-bottom: calc(5.8rem + env(safe-area-inset-bottom));
+  .site-footer--with-mini {
+    padding-bottom: calc(7.4rem + env(safe-area-inset-bottom));
   }
 
   .site-footer__col {
@@ -1953,8 +2049,8 @@ h4 {
     gap: 0.7rem;
   }
 
-  .site-footer {
-    padding-bottom: calc(6.6rem + env(safe-area-inset-bottom));
+  .site-footer--with-mini {
+    padding-bottom: calc(8.3rem + env(safe-area-inset-bottom));
   }
 
   .site-footer__legal-links {

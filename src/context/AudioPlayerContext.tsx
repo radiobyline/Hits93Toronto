@@ -62,6 +62,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(0.82);
@@ -130,8 +131,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     audio.preload = "none";
     audio.crossOrigin = "anonymous";
     audio.volume = 0.82;
+    let stopTimeoutId: number | undefined;
 
-    const silenceAndStop = () => {
+    const stopNow = () => {
+      if (stopTimeoutId) {
+        window.clearTimeout(stopTimeoutId);
+      }
       try {
         audio.muted = true;
         audio.volume = 0;
@@ -141,9 +146,38 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
 
       try {
         audio.pause();
+        audio.src = "";
       } catch {
         // no-op
       }
+    };
+
+    const silenceAndStop = () => {
+      if (stopTimeoutId) {
+        window.clearTimeout(stopTimeoutId);
+      }
+
+      const context = audioContextRef.current;
+      const gain = masterGainRef.current;
+
+      if (context && gain && context.state !== "closed") {
+        try {
+          const now = context.currentTime;
+          const currentGain = gain.gain.value > 0 ? gain.gain.value : 1;
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(currentGain, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+        } catch {
+          // no-op
+        }
+
+        stopTimeoutId = window.setTimeout(() => {
+          stopNow();
+        }, 95);
+        return;
+      }
+
+      stopNow();
     };
 
     const handlePlaying = () => {
@@ -184,16 +218,18 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     audioElementRef.current = audio;
 
     return () => {
+      if (stopTimeoutId) {
+        window.clearTimeout(stopTimeoutId);
+      }
       window.removeEventListener("pagehide", silenceAndStop);
       window.removeEventListener("beforeunload", silenceAndStop);
-      silenceAndStop();
+      stopNow();
       audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("waiting", handleWaiting);
       audio.removeEventListener("stalled", handleWaiting);
       audio.removeEventListener("error", handleError);
       audio.removeEventListener("volumechange", handleVolumeChange);
-      audio.src = "";
       audioElementRef.current = null;
       try {
         mediaSourceRef.current?.disconnect();
@@ -205,11 +241,17 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       } catch {
         // no-op
       }
+      try {
+        masterGainRef.current?.disconnect();
+      } catch {
+        // no-op
+      }
       if (audioContextRef.current && audioContextRef.current.state !== "closed") {
         void audioContextRef.current.close().catch(() => undefined);
       }
       mediaSourceRef.current = null;
       analyserRef.current = null;
+      masterGainRef.current = null;
       audioContextRef.current = null;
       setAnalyserNode(null);
     };
@@ -240,16 +282,20 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
 
       const context = new NativeAudioContext();
       const analyser = context.createAnalyser();
+      const masterGain = context.createGain();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.85;
+      masterGain.gain.value = 1;
 
       const source = context.createMediaElementSource(audio);
       source.connect(analyser);
-      analyser.connect(context.destination);
+      analyser.connect(masterGain);
+      masterGain.connect(context.destination);
 
       audioContextRef.current = context;
       mediaSourceRef.current = source;
       analyserRef.current = analyser;
+      masterGainRef.current = masterGain;
       setAnalyserNode(analyser);
     } catch (error) {
       setPlaybackError(

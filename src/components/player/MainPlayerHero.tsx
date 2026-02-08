@@ -9,7 +9,7 @@ import { ProgrammeBlock } from "../schedule/ProgrammeBlock";
 import { LiveIndicator } from "./LiveIndicator";
 import { MusicLinks } from "./MusicLinks";
 import { PlayerControls } from "./PlayerControls";
-import { Visualizer } from "./Visualizer";
+import { AuroraSweepFrame } from "./AuroraSweepFrame";
 import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
 
 interface MainPlayerHeroProps {
@@ -52,7 +52,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                   img.src = DEFAULT_ARTWORK_URL;
                 }}
               />
-              <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} mode="frame" />
+              <AuroraSweepFrame analyserNode={analyserNode} />
             </div>
           </div>
 

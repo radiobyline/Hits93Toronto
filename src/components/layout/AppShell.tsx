@@ -16,7 +16,7 @@ export function AppShell(): JSX.Element {
   const showMiniPlayer = hasInteracted && (!isHomeRoute || !isMainPlayerInView);
 
   return (
-    <div className="app-root">
+    <div className={`app-root ${showMiniPlayer ? "app-root--with-mini" : ""}`}>
       <Header theme={theme} onToggleTheme={toggleTheme} />
       <main
         className={`site-main ${isHomeRoute ? "site-main--home" : ""} ${
@@ -25,7 +25,7 @@ export function AppShell(): JSX.Element {
       >
         <Outlet />
       </main>
-      <Footer />
+      <Footer withMiniPlayer={showMiniPlayer} />
       {showMiniPlayer && <MiniPlayer />}
     </div>
   );

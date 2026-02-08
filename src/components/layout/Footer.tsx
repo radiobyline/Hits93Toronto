@@ -15,11 +15,15 @@ const SOCIAL_LINKS = [
   { label: "LinkedIn", href: "https://linkedin.com/company/Hits93Toronto", icon: LinkedInIcon }
 ];
 
-export function Footer(): JSX.Element {
+interface FooterProps {
+  withMiniPlayer?: boolean;
+}
+
+export function Footer({ withMiniPlayer = false }: FooterProps): JSX.Element {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="site-footer">
+    <footer className={`site-footer ${withMiniPlayer ? "site-footer--with-mini" : ""}`}>
       <div className="container site-footer__inner">
         <div className="site-footer__col">
           <Link to="/llm-info" className="site-footer__llm-link site-footer__llm-link--desktop">
