@@ -134,7 +134,6 @@ h4 {
   z-index: 40;
   border-bottom: 1px solid var(--surface-border);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   background: var(--chrome-bg);
   transition: transform 220ms ease, background-color 180ms ease;
   will-change: transform;
@@ -484,7 +483,6 @@ h4 {
   border-radius: 50%;
   background: var(--accent);
   opacity: 0.42;
-  will-change: transform, opacity;
 }
 
 .live-indicator--active .live-indicator__dot {
@@ -494,18 +492,15 @@ h4 {
 
 @keyframes livePulse {
   0% {
-    transform: scale(0.84);
-    opacity: 0.52;
+    box-shadow: 0 0 0 0 rgba(255, 124, 67, 0.38);
   }
 
-  50% {
-    transform: scale(1);
-    opacity: 1;
+  70% {
+    box-shadow: 0 0 0 9px rgba(255, 124, 67, 0);
   }
 
   100% {
-    transform: scale(0.84);
-    opacity: 0.52;
+    box-shadow: 0 0 0 0 rgba(255, 124, 67, 0);
   }
 }
 
@@ -1686,7 +1681,6 @@ h4 {
   bottom: 0;
   z-index: 45;
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   background: color-mix(in srgb, var(--bg-contrast), transparent 4%);
   border-top: 1px solid color-mix(in srgb, var(--text-inverse), transparent 84%);
   padding: 0.44rem 0.74rem calc(0.44rem + env(safe-area-inset-bottom));
@@ -1841,27 +1835,6 @@ h4 {
 }
 
 @media (max-width: 980px) {
-  .site-header {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    will-change: auto;
-  }
-
-  .mini-player {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    will-change: auto;
-  }
-
-  .hero-player__main,
-  .recent-carousel,
-  .programme-block,
-  .page-section,
-  .modal,
-  .embed-player {
-    box-shadow: none;
-  }
-
   .site-header__inner {
     grid-template-columns: auto minmax(0, 1fr) auto;
     padding: 0.6rem 0;
