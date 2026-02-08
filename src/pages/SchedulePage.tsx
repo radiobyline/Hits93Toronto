@@ -269,9 +269,6 @@ export function SchedulePage(): JSX.Element {
                     alt={`${item.name} artwork`}
                     loading="lazy"
                     className="schedule-list__artwork"
-                    width={300}
-                    height={300}
-                    decoding="async"
                     onError={(event) => {
                       event.currentTarget.src = DEFAULT_ARTWORK_URL;
                     }}

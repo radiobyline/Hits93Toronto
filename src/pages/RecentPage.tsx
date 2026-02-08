@@ -208,9 +208,6 @@ export function RecentPage(): JSX.Element {
                   src={row.track.artworkUrl}
                   alt={`${row.track.title} artwork`}
                   loading="lazy"
-                  width={80}
-                  height={80}
-                  decoding="async"
                   onError={(event) => {
                     event.currentTarget.src = DEFAULT_ARTWORK_URL;
                   }}

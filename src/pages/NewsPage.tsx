@@ -84,10 +84,6 @@ export function NewsPage(): JSX.Element {
                     src={selectedPost.imageUrl || DEFAULT_ARTWORK_URL}
                     alt={`${selectedPost.title} cover`}
                     className="news-page__cover"
-                    width={1200}
-                    height={630}
-                    loading="lazy"
-                    decoding="async"
                     onError={(event) => {
                       event.currentTarget.src = DEFAULT_ARTWORK_URL;
                     }}

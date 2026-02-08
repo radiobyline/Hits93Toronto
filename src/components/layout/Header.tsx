@@ -26,7 +26,7 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const lastScrollY = useRef(0);
   const isTicking = useRef(false);
   const isDark = theme === "dark";
-  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.png");
+  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.svg");
 
   useEffect(() => {
     setMenuOpen(false);
@@ -112,9 +112,6 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
               className="brand-mark__logo"
               src={logoSrc}
               alt="HiTS 93 Toronto"
-              width={80}
-              height={54}
-              decoding="async"
             />
           </NavLink>
         </div>

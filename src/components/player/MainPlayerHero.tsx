@@ -45,10 +45,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
                 alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
                 className="hero-player__artwork"
-                width={640}
-                height={640}
-                fetchPriority="high"
-                decoding="async"
                 onError={(event) => {
                   const img = event.currentTarget;
                   img.src = DEFAULT_ARTWORK_URL;
