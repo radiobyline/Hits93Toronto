@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { usePlayerViewport } from "../../context/PlayerViewportContext";
 import { useTheme } from "../../hooks/useTheme";
 import { MiniPlayer } from "../player/MiniPlayer";
 import { SeoManager } from "../seo/SeoManager";
@@ -8,11 +7,10 @@ import { Header } from "./Header";
 
 export function AppShell(): JSX.Element {
   const { theme, toggleTheme } = useTheme();
-  const { isMainPlayerInView } = usePlayerViewport();
   const location = useLocation();
 
   const isHomeRoute = location.pathname === "/";
-  const showMiniPlayer = !isHomeRoute || isMainPlayerInView;
+  const showMiniPlayer = true;
 
   return (
     <div className={`app-root ${showMiniPlayer ? "app-root--with-mini" : ""}`}>
