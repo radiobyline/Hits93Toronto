@@ -1,10 +1,13 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { getProgrammeCatalogEntry, getProgrammeNameBySlug } from "../../services/programmeCatalog";
 import { resolvePublicAssetUrl } from "../../utils/assets";
+import { getProgrammeArtworkUrl, resolveProgrammeSlug } from "../../utils/programme";
 
 interface RouteSeo {
   title: string;
   description: string;
+  imageUrl?: string;
 }
 
 const SITE_NAME = "Hits 93 Toronto";
@@ -101,18 +104,50 @@ function toPlainPath(pathname: string): string {
   return pathname;
 }
 
+function toTitleCase(value: string): string {
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function toAbsoluteAssetUrl(path: string): string {
+  return new URL(path, window.location.origin).toString();
+}
+
 function getRouteSeo(pathname: string): RouteSeo {
   if (pathname.startsWith("/schedule/programme/")) {
+    const parts = pathname.split("/").filter(Boolean);
+    const rawSlug = parts[4] || "";
+    const slug = resolveProgrammeSlug(rawSlug);
+    const entry = getProgrammeCatalogEntry(slug);
+    const programName = entry?.name ?? getProgrammeNameBySlug(slug, toTitleCase(slug) || "Program");
+    const imageUrl = toAbsoluteAssetUrl(getProgrammeArtworkUrl(programName));
+
     return {
-      title: `Program Episode | ${SITE_NAME}`,
-      description: "Program episode details and tracks played on Hits 93 Toronto."
+      title: `${programName} Episode | ${SITE_NAME}`,
+      description: `Tracks played and episode details for ${programName} on Hits 93 Toronto.`,
+      imageUrl
     };
   }
 
   if (pathname.startsWith("/schedule/programmes/")) {
+    const parts = pathname.split("/").filter(Boolean);
+    const rawSlug = parts[2] || "";
+    const slug = resolveProgrammeSlug(rawSlug);
+    const entry = getProgrammeCatalogEntry(slug);
+    const programName = entry?.name ?? getProgrammeNameBySlug(slug, toTitleCase(slug) || "Program");
+    const description =
+      entry?.longDescription ??
+      entry?.shortDescription ??
+      `${programName} program page with description and recent episodes on Hits 93 Toronto.`;
+    const imageUrl = toAbsoluteAssetUrl(getProgrammeArtworkUrl(programName));
+
     return {
-      title: `Program Page | ${SITE_NAME}`,
-      description: "Program description and recent episodes on Hits 93 Toronto."
+      title: `${programName} | Program | ${SITE_NAME}`,
+      description,
+      imageUrl
     };
   }
 
@@ -129,7 +164,7 @@ export function SeoManager(): JSX.Element | null {
     const path = toPlainPath(location.pathname || "/");
     const hashUrl = toAbsoluteHashUrl(path);
     const seo = getRouteSeo(path);
-    const imageUrl = DEFAULT_IMAGE;
+    const imageUrl = seo.imageUrl ?? DEFAULT_IMAGE;
     const favicon = resolvePublicAssetUrl("branding/hits93-social-icon.png");
     const socialAvatar = resolvePublicAssetUrl("branding/hits93-social-avatar.png");
 
