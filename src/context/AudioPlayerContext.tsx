@@ -10,6 +10,7 @@ import {
 } from "react";
 import { POLL_INTERVAL_MS, STREAM_URL_HTTPS } from "../config/constants";
 import { fetchHistory, shapeHistoryForPlayer } from "../services/historyService";
+import { emitStopPreviews } from "../services/previewBus";
 import type { Track } from "../types";
 
 interface AudioPlayerContextValue {
@@ -310,6 +311,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       return;
     }
 
+    emitStopPreviews();
     ensureAudioGraph();
 
     setHasInteracted(true);

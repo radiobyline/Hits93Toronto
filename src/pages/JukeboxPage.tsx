@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL } from "../config/constants";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
+import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
 import { requestService } from "../services/requestService";
 import type { RequestLibraryTrack } from "../types";
@@ -8,7 +9,7 @@ import type { RequestLibraryTrack } from "../types";
 const PREVIEW_DURATION_MS = 15000;
 
 export function JukeboxPage(): JSX.Element {
-  const { isPlaying, pause } = useAudioPlayer();
+  const { pause } = useAudioPlayer();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RequestLibraryTrack[]>([]);
   const [searching, setSearching] = useState(false);
@@ -79,10 +80,9 @@ export function JukeboxPage(): JSX.Element {
   };
 
   const startPreview = async (track: RequestLibraryTrack) => {
+    emitStopPreviews();
     stopPreview();
-    if (isPlaying) {
-      pause();
-    }
+    pause();
 
     const cached = previewCache[track.id];
     if (cached === undefined) {
@@ -122,6 +122,12 @@ export function JukeboxPage(): JSX.Element {
       stopPreview();
     }, PREVIEW_DURATION_MS);
   };
+
+  useEffect(() => {
+    return onStopPreviews(() => {
+      stopPreview();
+    });
+  }, [stopPreview]);
 
   const submitRequest = async () => {
     if (!selectedTrack) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL, HISTORY_PAGE_SIZE } from "../config/constants";
 import { PlayIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
+import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
 import { fetchHistory } from "../services/historyService";
 import type { Track } from "../types";
@@ -22,7 +23,7 @@ function dedupeTracks(tracks: Track[]): Track[] {
 }
 
 export function RecentPage(): JSX.Element {
-  const { isPlaying, pause } = useAudioPlayer();
+  const { pause } = useAudioPlayer();
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -78,11 +79,10 @@ export function RecentPage(): JSX.Element {
   };
 
   const startPreview = async (track: Track) => {
+    emitStopPreviews();
     const trackKey = getPreviewKey(track);
     stopPreview();
-    if (isPlaying) {
-      pause();
-    }
+    pause();
 
     const cached = previewCache[trackKey];
     if (cached === undefined) {
@@ -120,6 +120,12 @@ export function RecentPage(): JSX.Element {
       stopPreview();
     }, 15000);
   };
+
+  useEffect(() => {
+    return onStopPreviews(() => {
+      stopPreview();
+    });
+  }, [stopPreview]);
 
   const hasResults = tracks.length > 0;
   const sortedTracks = useMemo(() => {

@@ -9,6 +9,7 @@ import { PlayIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
+import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
@@ -74,7 +75,7 @@ function formatMinutesAgo(trackStartMs: number): string {
 }
 
 export function ProgrammeEpisodePage(): JSX.Element {
-  const { isPlaying, pause } = useAudioPlayer();
+  const { pause } = useAudioPlayer();
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
@@ -150,11 +151,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
   };
 
   const startPreview = async (track: Track) => {
+    emitStopPreviews();
     const trackKey = getPreviewKey(track);
     stopPreview();
-    if (isPlaying) {
-      pause();
-    }
+    pause();
 
     const cached = previewCache[trackKey];
     if (cached === undefined) {
@@ -192,6 +192,12 @@ export function ProgrammeEpisodePage(): JSX.Element {
       stopPreview();
     }, 15000);
   };
+
+  useEffect(() => {
+    return onStopPreviews(() => {
+      stopPreview();
+    });
+  }, [stopPreview]);
 
   useEffect(() => {
     let cancelled = false;

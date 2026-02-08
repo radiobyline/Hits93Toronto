@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
+import { emitStopPreviews, onStopPreviews } from "../../services/previewBus";
 import { fetchApplePreviewUrl } from "../../services/previewService";
 import { requestService } from "../../services/requestService";
 import type { RequestLibraryTrack } from "../../types";
@@ -13,7 +14,7 @@ interface RequestModalProps {
 }
 
 export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Element | null {
-  const { isPlaying, pause } = useAudioPlayer();
+  const { pause } = useAudioPlayer();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RequestLibraryTrack[]>([]);
   const [searching, setSearching] = useState(false);
@@ -104,10 +105,9 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
   };
 
   const startPreview = async (track: RequestLibraryTrack) => {
+    emitStopPreviews();
     stopPreview();
-    if (isPlaying) {
-      pause();
-    }
+    pause();
 
     const cached = previewCache[track.id];
     if (cached === undefined) {
@@ -147,6 +147,12 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
       stopPreview();
     }, PREVIEW_DURATION_MS);
   };
+
+  useEffect(() => {
+    return onStopPreviews(() => {
+      stopPreview();
+    });
+  }, [stopPreview]);
 
   const submitRequest = async () => {
     if (!selectedTrack) {
