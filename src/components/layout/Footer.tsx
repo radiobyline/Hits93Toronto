@@ -22,25 +22,28 @@ export function Footer(): JSX.Element {
     <footer className="site-footer">
       <div className="container site-footer__inner">
         <div className="site-footer__col">
-          <p>© {year} Hits 93 Toronto</p>
-          <div className="site-footer__legal-links">
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/terms">Terms</Link>
-            <Link to="/contact">Contact</Link>
-          </div>
-          <Link to="/llm-info" className="site-footer__llm-link">
+          <Link to="/llm-info" className="site-footer__llm-link site-footer__llm-link--desktop">
             Hey AI, learn about us
           </Link>
         </div>
 
         <div className="site-footer__col site-footer__col--center">
-          <p>
+          <p>© {year} Hits 93 Toronto</p>
+          <p className="site-footer__made">
             Made with <span className="site-footer__heart">❤️</span> in Toronto
           </p>
+          <Link to="/llm-info" className="site-footer__llm-link site-footer__llm-link--mobile">
+            Hey AI, learn about us
+          </Link>
         </div>
 
         <div className="site-footer__col site-footer__col--right">
-          <p>Follow</p>
+          <div className="site-footer__legal-links">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+            <Link to="/contact">Contact</Link>
+          </div>
+          <p>Follow Us</p>
           <div className="site-footer__socials">
             {SOCIAL_LINKS.map((social) => {
               const Icon = social.icon;

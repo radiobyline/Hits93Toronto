@@ -52,12 +52,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                   img.src = DEFAULT_ARTWORK_URL;
                 }}
               />
-              <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} mode="ring" />
-              <div className="hero-player__strap" aria-hidden="true">
-                <span>
-                  LIVE FROM TORONTO • HITS 93 • LIVE FROM TORONTO • HITS 93 •
-                </span>
-              </div>
+              <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} mode="frame" />
             </div>
           </div>
 

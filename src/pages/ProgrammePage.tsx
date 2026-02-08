@@ -144,6 +144,7 @@ export function ProgrammePage(): JSX.Element {
                     key={`${episode.slug}-${episode.startMs}-${episode.endMs}`}
                   >
                     <div>
+                      {isCurrent && <p className="schedule-list__live-tag">On air now</p>}
                       <h4>{formatProgrammeDate(episode.startMs)}</h4>
                       <p>
                         {formatClock(episode.startMs)} to {formatClock(episode.endMs)}

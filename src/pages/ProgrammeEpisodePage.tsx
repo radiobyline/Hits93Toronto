@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { DEFAULT_ARTWORK_URL, SCHEDULE_EPISODE_LOOKBACK_DAYS } from "../config/constants";
+import { PlayIcon } from "../components/ui/Icons";
+import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
+import { fetchApplePreviewUrl } from "../services/previewService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
 import { getProgrammeLongDescriptionBySlug } from "../services/programmeCatalog";
@@ -54,6 +57,9 @@ function formatMinutesAgo(trackStartMs: number): string {
 }
 
 export function ProgrammeEpisodePage(): JSX.Element {
+  const { isPlaying, pause } = useAudioPlayer();
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<number | undefined>();
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -64,6 +70,9 @@ export function ProgrammeEpisodePage(): JSX.Element {
     archive: [],
     tracks: []
   });
+  const [previewCache, setPreviewCache] = useState<Record<string, string | null>>({});
+  const [previewingKey, setPreviewingKey] = useState<string | null>(null);
+  const [previewLoadingKey, setPreviewLoadingKey] = useState<string | null>(null);
 
   const parsedDate = useMemo(() => parseIsoDateLocal(params.dateIso ?? ""), [params.dateIso]);
   const parsedStartMs = useMemo(() => Number(params.startMs), [params.startMs]);
@@ -98,6 +107,74 @@ export function ProgrammeEpisodePage(): JSX.Element {
     }
     return Date.now() < state.episode.startMs;
   }, [state.episode]);
+
+  useEffect(() => {
+    return () => {
+      if (previewTimeoutRef.current) {
+        window.clearTimeout(previewTimeoutRef.current);
+      }
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
+  const getPreviewKey = (track: Track): string => `${track.key}-${track.startMs}`;
+
+  const stopPreview = () => {
+    if (previewTimeoutRef.current) {
+      window.clearTimeout(previewTimeoutRef.current);
+    }
+
+    previewAudioRef.current?.pause();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewingKey(null);
+  };
+
+  const startPreview = async (track: Track) => {
+    const trackKey = getPreviewKey(track);
+    stopPreview();
+    if (isPlaying) {
+      pause();
+    }
+
+    const cached = previewCache[trackKey];
+    if (cached === undefined) {
+      setPreviewLoadingKey(trackKey);
+      const previewUrl = await fetchApplePreviewUrl(track.artist, track.title);
+      setPreviewCache((previous) => ({
+        ...previous,
+        [trackKey]: previewUrl
+      }));
+      setPreviewLoadingKey(null);
+
+      if (!previewUrl) {
+        return;
+      }
+
+      const audio = new Audio(previewUrl);
+      previewAudioRef.current = audio;
+      setPreviewingKey(trackKey);
+      void audio.play();
+      previewTimeoutRef.current = window.setTimeout(() => {
+        stopPreview();
+      }, 15000);
+      return;
+    }
+
+    if (!cached) {
+      return;
+    }
+
+    const audio = new Audio(cached);
+    previewAudioRef.current = audio;
+    setPreviewingKey(trackKey);
+    void audio.play();
+    previewTimeoutRef.current = window.setTimeout(() => {
+      stopPreview();
+    }, 15000);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -248,8 +325,30 @@ export function ProgrammeEpisodePage(): JSX.Element {
               <div className="recent-list">
                 {state.tracks.map((track) => {
                   const timeLabel = isCurrentEpisode ? formatMinutesAgo(track.startMs) : null;
+                  const trackKey = getPreviewKey(track);
                   return (
                     <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
+                      <button
+                        type="button"
+                        className="control-pill control-pill--small recent-list__preview"
+                        disabled={previewLoadingKey === trackKey}
+                        onClick={() => {
+                          if (previewingKey === trackKey) {
+                            stopPreview();
+                            return;
+                          }
+                          void startPreview(track);
+                        }}
+                      >
+                        <PlayIcon />
+                        <span>
+                          {previewingKey === trackKey
+                            ? "Stop"
+                            : previewLoadingKey === trackKey
+                              ? "Loading..."
+                              : "Preview"}
+                        </span>
+                      </button>
                       <img
                         src={track.artworkUrl}
                         alt={`${track.title} artwork`}

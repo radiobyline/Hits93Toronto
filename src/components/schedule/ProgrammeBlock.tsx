@@ -115,8 +115,12 @@ export function ProgrammeBlock(): JSX.Element {
                   </a>
                 </span>
               </li>
-              <li>Request songs and shoutouts via Jukebox.</li>
-              <li>Rate tracks or send feedback.</li>
+              <li>
+                Request songs and shoutouts via <Link to="/jukebox">Jukebox</Link>.
+              </li>
+              <li>
+                Rate tracks or send feedback via <Link to="/contact">Contact</Link>.
+              </li>
               <li>
                 <a href="https://paypal.me/Hits93Toronto" target="_blank" rel="noreferrer">
                   Support the station

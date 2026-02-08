@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL } from "../config/constants";
+import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { fetchApplePreviewUrl } from "../services/previewService";
 import { requestService } from "../services/requestService";
 import type { RequestLibraryTrack } from "../types";
@@ -7,6 +8,7 @@ import type { RequestLibraryTrack } from "../types";
 const PREVIEW_DURATION_MS = 15000;
 
 export function JukeboxPage(): JSX.Element {
+  const { isPlaying, pause } = useAudioPlayer();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RequestLibraryTrack[]>([]);
   const [searching, setSearching] = useState(false);
@@ -78,6 +80,9 @@ export function JukeboxPage(): JSX.Element {
 
   const startPreview = async (track: RequestLibraryTrack) => {
     stopPreview();
+    if (isPlaying) {
+      pause();
+    }
 
     const cached = previewCache[track.id];
     if (cached === undefined) {
@@ -222,6 +227,7 @@ export function JukeboxPage(): JSX.Element {
             <p className="status-inline">
               Requests are automatic. Shoutouts are accepted now and will expand in future updates.
             </p>
+            <p className="status-inline">Choose a song from Search before sending your request.</p>
 
             <label className="field" htmlFor="jukebox-track">
               <span>Selected Song</span>

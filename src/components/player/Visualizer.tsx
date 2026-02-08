@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 interface VisualizerProps {
   analyserNode: AnalyserNode | null;
   isPlaying: boolean;
-  mode?: "bars" | "ring";
+  mode?: "bars" | "ring" | "frame";
 }
 
 const BAR_COUNT = 36;
@@ -95,6 +95,77 @@ export function Visualizer({ analyserNode, isPlaying, mode = "bars" }: Visualize
       }
     };
 
+    const drawFrame = (width: number, height: number, now: number) => {
+      const segmentsPerEdge = 18;
+      const totalSegments = segmentsPerEdge * 4;
+      const inset = Math.max(6, Math.min(width, height) * 0.045);
+      const left = inset;
+      const top = inset;
+      const right = width - inset;
+      const bottom = height - inset;
+
+      context2d.strokeStyle = "rgba(255, 255, 255, 0.14)";
+      context2d.lineWidth = 1.3;
+      context2d.strokeRect(left, top, right - left, bottom - top);
+
+      const edgeLengthX = right - left;
+      const edgeLengthY = bottom - top;
+
+      for (let index = 0; index < totalSegments; index += 1) {
+        const sampleIndex = data.length > 0 ? Math.floor((index / totalSegments) * data.length) : 0;
+        const sampled = data[sampleIndex] ? data[sampleIndex] / 255 : 0;
+        const synthetic =
+          (Math.sin(now * 0.004 + index * 0.35 + phaseOffset) +
+            Math.sin(now * 0.0025 + index * 0.2 + phaseOffset * 0.6) +
+            2) /
+          4;
+        const intensity = isPlaying ? Math.max(sampled, synthetic * 0.3) : synthetic * 0.25;
+        const length = 3 + intensity * 14;
+
+        let startX = left;
+        let startY = top;
+        let endX = left;
+        let endY = top;
+
+        if (index < segmentsPerEdge) {
+          const ratio = index / segmentsPerEdge;
+          startX = left + edgeLengthX * ratio;
+          startY = top;
+          endX = startX;
+          endY = top - length;
+        } else if (index < segmentsPerEdge * 2) {
+          const ratio = (index - segmentsPerEdge) / segmentsPerEdge;
+          startX = right;
+          startY = top + edgeLengthY * ratio;
+          endX = right + length;
+          endY = startY;
+        } else if (index < segmentsPerEdge * 3) {
+          const ratio = (index - segmentsPerEdge * 2) / segmentsPerEdge;
+          startX = right - edgeLengthX * ratio;
+          startY = bottom;
+          endX = startX;
+          endY = bottom + length;
+        } else {
+          const ratio = (index - segmentsPerEdge * 3) / segmentsPerEdge;
+          startX = left;
+          startY = bottom - edgeLengthY * ratio;
+          endX = left - length;
+          endY = startY;
+        }
+
+        const gradient = context2d.createLinearGradient(startX, startY, endX, endY);
+        gradient.addColorStop(0, "rgba(255, 124, 67, 0.88)");
+        gradient.addColorStop(1, "rgba(55, 203, 176, 0.88)");
+
+        context2d.strokeStyle = gradient;
+        context2d.lineWidth = 1.9;
+        context2d.beginPath();
+        context2d.moveTo(startX, startY);
+        context2d.lineTo(endX, endY);
+        context2d.stroke();
+      }
+    };
+
     const draw = () => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -116,6 +187,8 @@ export function Visualizer({ analyserNode, isPlaying, mode = "bars" }: Visualize
       const now = performance.now();
       if (mode === "ring") {
         drawRing(width, height, now);
+      } else if (mode === "frame") {
+        drawFrame(width, height, now);
       } else {
         drawBars(width, height, now);
       }
@@ -135,7 +208,9 @@ export function Visualizer({ analyserNode, isPlaying, mode = "bars" }: Visualize
   return (
     <canvas
       ref={canvasRef}
-      className={`audio-visualizer ${mode === "ring" ? "audio-visualizer--ring" : ""}`}
+      className={`audio-visualizer ${mode === "ring" ? "audio-visualizer--ring" : ""} ${
+        mode === "frame" ? "audio-visualizer--frame" : ""
+      }`}
       aria-hidden="true"
     />
   );
