@@ -34,8 +34,9 @@ export function normalizeTrack(raw: RawHistoryTrack): Track {
   const lengthMs = toNumber(raw.length);
   const endMs = lengthMs > 0 ? startMs + lengthMs : null;
 
+  // Prefer medium artwork to reduce payload size on mobile and improve page performance.
   const artworkUrl =
-    raw.img_large_url || raw.img_medium_url || raw.img_url || DEFAULT_ARTWORK_URL;
+    raw.img_medium_url || raw.img_url || raw.img_large_url || DEFAULT_ARTWORK_URL;
 
   const rawMusicId = raw.all_music_id ?? raw.metadata?.["all_music_id"] ?? raw.metadata?.["id"];
   const allMusicId = toNumber(rawMusicId) || null;

@@ -776,6 +776,7 @@ h4 {
 
 .recent-card__image {
   width: 100%;
+  height: auto;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   display: block;
@@ -1904,6 +1905,12 @@ h4 {
 @media (max-width: 760px) {
   .container {
     width: min(1220px, 100% - 1rem);
+  }
+
+  /* Backdrop blurs are expensive on iOS Safari; disable on smaller screens for smoother scrolling. */
+  .site-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .site-main {
