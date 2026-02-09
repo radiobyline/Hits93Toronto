@@ -162,6 +162,21 @@ a {
   color: inherit;
 }
 
+/* App-style links: no underlines by default on the Live/Home and Contact pages. */
+.site-main--home a:not(.control-pill),
+.contact-page a:not(.control-pill) {
+  text-decoration: none;
+}
+
+.site-main--home a:not(.control-pill):hover,
+.site-main--home a:not(.control-pill):focus-visible,
+.contact-page a:not(.control-pill):hover,
+.contact-page a:not(.control-pill):focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
 h1,
 h2,
 h3,
@@ -279,11 +294,11 @@ h4 {
 }
 
 .site-nav--desktop {
-  margin-left: 0.35rem;
+  margin-left: 0.85rem;
 }
 
 .brand-mark {
-  margin-right: 0.25rem;
+  margin-right: 0.75rem;
 }
 
 .site-nav--mobile {
@@ -540,6 +555,10 @@ h4 {
   flex-wrap: wrap;
 }
 
+.hero-player__utility-desktop-only {
+  display: none;
+}
+
 .hero-player__vote-divider {
   border-top: 1px solid color-mix(in srgb, var(--surface-border), transparent 6%);
   margin-top: 0.08rem;
@@ -701,7 +720,7 @@ h4 {
 
 .volume-control {
   position: relative;
-  border: 1px solid var(--surface-border);
+  border: 1px solid color-mix(in srgb, var(--text), transparent 72%);
   border-radius: 999px;
   background: var(--surface-strong);
   min-height: 40px;
@@ -710,6 +729,12 @@ h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.volume-control:hover,
+.volume-control:focus-within {
+  border-color: color-mix(in srgb, var(--accent), var(--text) 24%);
 }
 
 .volume-control__toggle {
@@ -1199,6 +1224,8 @@ h4 {
 .schedule-controls__date {
   display: grid;
   gap: 0.24rem;
+  justify-items: center;
+  text-align: center;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
@@ -1210,6 +1237,12 @@ h4 {
   color: var(--text);
   font: inherit;
   padding: 0.44rem 0.78rem;
+}
+
+.schedule-status {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
 }
 
 .schedule-list {
@@ -1912,16 +1945,23 @@ h4 {
 }
 
 .mini-player .control-pill {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-inverse);
   min-height: 28px;
   padding: 0.24rem 0.5rem;
   font-size: 0.74rem;
 }
 
+.mini-player .control-pill:not(.control-pill--play) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-inverse);
+}
+
 .mini-player .control-pill--play {
-  background: linear-gradient(120deg, var(--accent), var(--accent-alt));
+  border: 1px solid transparent;
+  background:
+    linear-gradient(120deg, var(--accent), var(--accent-alt)) padding-box,
+    linear-gradient(120deg, var(--accent), var(--accent-alt)) border-box;
+  background-clip: padding-box, border-box;
   color: #fff;
 }
 
@@ -2003,6 +2043,12 @@ h4 {
 @media (prefers-reduced-motion: reduce) {
   .site-header {
     transition: none;
+  }
+}
+
+@media (min-width: 981px) {
+  .hero-player__utility-desktop-only {
+    display: inline-flex;
   }
 }
 

@@ -36,7 +36,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
   const artworkSrc = currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL;
   const voteSummary = currentVote
-    ? `You already ${currentVote === "up" ? "liked" : "disliked"} this track. Thanks for rating it.`
+    ? "Thanks for sharing your thoughts on this track!"
     : voteNote;
 
   return (
@@ -134,6 +134,18 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
               </button>
               <Link to="/jukebox" className="control-pill control-pill--small">
                 Open Jukebox
+              </Link>
+              <Link
+                to="/recent"
+                className="control-pill control-pill--small hero-player__utility-desktop-only"
+              >
+                Recently Played
+              </Link>
+              <Link
+                to="/schedule"
+                className="control-pill control-pill--small hero-player__utility-desktop-only"
+              >
+                Full Schedule
               </Link>
             </div>
 

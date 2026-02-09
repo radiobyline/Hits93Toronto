@@ -285,7 +285,9 @@ export function SchedulePage(): JSX.Element {
           </button>
         </div>
 
-        <p className="status-inline">Showing {formatDateLabel(selectedDateIso, todayStart)}</p>
+        <p className="status-inline schedule-status">
+          Showing {formatDateLabel(selectedDateIso, todayStart)}
+        </p>
         {currentProgrammeId && (
           <p className="status-inline">The current program is pinned to the top.</p>
         )}

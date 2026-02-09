@@ -15,7 +15,7 @@ export function MiniPlayer(): JSX.Element {
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
 
   const voteSummary = currentVote
-    ? `You already ${currentVote === "up" ? "liked" : "disliked"} this track. Thanks for sharing your opinion.`
+    ? "Thanks for sharing your thoughts on this track!"
     : voteNote;
 
   return (

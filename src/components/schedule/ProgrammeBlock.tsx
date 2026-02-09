@@ -93,6 +93,8 @@ export function ProgrammeBlock(): JSX.Element {
             </article>
           </div>
 
+          <div className="mini-player-sentinel" aria-hidden="true" />
+
           <section className="programme-block__cta-grid">
             <article className="programme-block__cta">
               <h3>Music Submissions</h3>
