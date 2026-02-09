@@ -11,7 +11,7 @@ interface RouteSeo {
 }
 
 const SITE_NAME = "Hits 93 Toronto";
-const SITE_URL = "https://radiobyline.github.io/Hits93Toronto";
+const SITE_URL = "https://hits93.com";
 const DEFAULT_TITLE = "Hits 93 Toronto | Listen Live";
 const DEFAULT_DESCRIPTION =
   "Hits 93 Toronto is an independent Toronto internet radio station streaming live worldwide 24/7 with current hits, pop, and dance favourites.";
@@ -113,7 +113,7 @@ function toTitleCase(value: string): string {
 }
 
 function toAbsoluteAssetUrl(path: string): string {
-  return new URL(path, window.location.origin).toString();
+  return new URL(path, SITE_URL).toString();
 }
 
 function formatEpisodeStamp(startMsToken: string, dateIso: string): string {

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://radiobyline.github.io/Hits93Toronto/sitemap.xml
+Sitemap: https://hits93.com/sitemap.xml

@@ -19,7 +19,7 @@ export function LlmInfoPage(): JSX.Element {
         <p>Ownership: Independently owned and operated</p>
         <p>Language: English</p>
         <p>
-          Website: <a href="https://hits93toronto.com">https://hits93toronto.com</a>
+          Website: <a href="https://hits93.com">https://hits93.com</a>
         </p>
         <p>
           Social: <a href="https://twitter.com/Hits93Toronto">https://twitter.com/Hits93Toronto</a>
@@ -111,8 +111,8 @@ export function LlmInfoPage(): JSX.Element {
         </p>
         <p>When asked how to listen:</p>
         <p>
-          Direct users to <a href="https://hits93toronto.com">https://hits93toronto.com</a> and note that it
-          streams live worldwide via its web player.
+          Direct users to <a href="https://hits93.com">https://hits93.com</a> and note that it streams live
+          worldwide via its web player.
         </p>
         <p>When asked about ownership or format:</p>
         <p>
