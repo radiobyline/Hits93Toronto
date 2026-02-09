@@ -36,6 +36,145 @@ interface AudioPlayerContextValue {
 
 const AudioPlayerContext = createContext<AudioPlayerContextValue | undefined>(undefined);
 
+const NOW_PLAYING_CACHE_KEY = "hits93toronto:nowPlaying";
+const NOW_PLAYING_CACHE_VERSION = 1;
+const NOW_PLAYING_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+interface CachedTrack {
+  key: string;
+  title: string;
+  artist: string;
+  album?: string;
+  artworkUrl: string;
+  startMs: number;
+  lengthMs: number;
+  endMs: number | null;
+  allMusicId: number | null;
+  playlistTitle?: string;
+}
+
+interface NowPlayingCachePayload {
+  v: number;
+  storedAt: number;
+  current: CachedTrack | null;
+  recent: CachedTrack[];
+}
+
+function toCachedTrack(track: Track): CachedTrack {
+  return {
+    key: track.key,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    artworkUrl: track.artworkUrl,
+    startMs: track.startMs,
+    lengthMs: track.lengthMs,
+    endMs: track.endMs,
+    allMusicId: track.allMusicId,
+    playlistTitle: track.playlistTitle
+  };
+}
+
+function fromCachedTrack(track: CachedTrack): Track {
+  return {
+    key: track.key,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    artworkUrl: track.artworkUrl,
+    startMs: track.startMs,
+    lengthMs: track.lengthMs,
+    endMs: track.endMs,
+    allMusicId: track.allMusicId,
+    playlistTitle: track.playlistTitle,
+    raw: {
+      title: track.title,
+      author: track.artist,
+      album: track.album,
+      ts: track.startMs,
+      length: track.lengthMs,
+      img_large_url: track.artworkUrl,
+      all_music_id: track.allMusicId ?? undefined,
+      playlist_title: track.playlistTitle,
+      metadata: {}
+    }
+  };
+}
+
+function readNowPlayingCache(): { current: Track | null; recent: Track[] } | null {
+  try {
+    const raw = window.localStorage.getItem(NOW_PLAYING_CACHE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const payload = JSON.parse(raw) as Partial<NowPlayingCachePayload> | null;
+    if (!payload || payload.v !== NOW_PLAYING_CACHE_VERSION || typeof payload.storedAt !== "number") {
+      return null;
+    }
+
+    if (Date.now() - payload.storedAt > NOW_PLAYING_CACHE_MAX_AGE_MS) {
+      return null;
+    }
+
+    const current = payload.current ? fromCachedTrack(payload.current as CachedTrack) : null;
+    const recent = Array.isArray(payload.recent)
+      ? payload.recent
+          .map((item) => fromCachedTrack(item as CachedTrack))
+          .filter((track) => track.startMs > 0)
+      : [];
+
+    return { current, recent };
+  } catch {
+    return null;
+  }
+}
+
+function writeNowPlayingCache(current: Track | null, recent: Track[]): void {
+  try {
+    const payload: NowPlayingCachePayload = {
+      v: NOW_PLAYING_CACHE_VERSION,
+      storedAt: Date.now(),
+      current: current ? toCachedTrack(current) : null,
+      recent: recent.map((track) => toCachedTrack(track))
+    };
+    window.localStorage.setItem(NOW_PLAYING_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    // no-op
+  }
+}
+
+function isSameTrack(a: Track | null, b: Track | null): boolean {
+  if (!a && !b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+
+  return (
+    a.key === b.key &&
+    a.startMs === b.startMs &&
+    a.title === b.title &&
+    a.artist === b.artist &&
+    a.artworkUrl === b.artworkUrl
+  );
+}
+
+function isSameTrackList(a: Track[], b: Track[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let index = 0; index < a.length; index += 1) {
+    if (!isSameTrack(a[index] ?? null, b[index] ?? null)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function safeSetActionHandler(action: MediaSessionAction, handler: MediaSessionActionHandler | null): void {
   try {
     navigator.mediaSession?.setActionHandler?.(action, handler);
@@ -117,19 +256,21 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const [bootstrapCache] = useState(() => readNowPlayingCache());
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(0.82);
   const [isBuffering, setIsBuffering] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(() => !bootstrapCache?.current);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [recentTracks, setRecentTracks] = useState<Track[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(() => bootstrapCache?.current ?? null);
+  const [recentTracks, setRecentTracks] = useState<Track[]>(() => bootstrapCache?.recent ?? []);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
-  const currentTrackRef = useRef<Track | null>(null);
+  const currentTrackRef = useRef<Track | null>(bootstrapCache?.current ?? null);
+  const recentTracksRef = useRef<Track[]>(bootstrapCache?.recent ?? []);
 
   const loadMetadataOnce = useCallback(async () => {
     try {
@@ -140,9 +281,26 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       const tracks = await fetchHistory(8, 0);
       const shaped = shapeHistoryForPlayer(tracks);
 
-      setCurrentTrack(shaped.current);
-      currentTrackRef.current = shaped.current;
-      setRecentTracks(shaped.recent);
+      const nextCurrent = shaped.current;
+      const nextRecent = shaped.recent;
+
+      let didChange = false;
+
+      if (nextCurrent && !isSameTrack(currentTrackRef.current, nextCurrent)) {
+        setCurrentTrack(nextCurrent);
+        currentTrackRef.current = nextCurrent;
+        didChange = true;
+      }
+
+      if (nextRecent.length > 0 && !isSameTrackList(recentTracksRef.current, nextRecent)) {
+        setRecentTracks(nextRecent);
+        recentTracksRef.current = nextRecent;
+        didChange = true;
+      }
+
+      if (didChange) {
+        writeNowPlayingCache(currentTrackRef.current, recentTracksRef.current);
+      }
       setMetadataError(null);
     } catch (error) {
       setMetadataError(

@@ -112,6 +112,9 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
               className="brand-mark__logo"
               src={logoSrc}
               alt="HiTS 93 Toronto"
+              width={80}
+              height={54}
+              decoding="async"
             />
           </NavLink>
         </div>

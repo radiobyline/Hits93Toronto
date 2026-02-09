@@ -34,6 +34,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const artworkSrc = currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL;
 
   return (
     <>
@@ -42,9 +43,14 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
           <div className="hero-player__artwork-panel">
             <div className="hero-player__artwork-wrap">
               <img
-                src={currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL}
+                src={artworkSrc}
                 alt={currentTrack ? `${currentTrack.title} artwork` : "Station artwork"}
                 className="hero-player__artwork"
+                width={640}
+                height={640}
+                loading="eager"
+                decoding="async"
+                fetchPriority={currentTrack ? "high" : "auto"}
                 onError={(event) => {
                   const img = event.currentTarget;
                   img.src = DEFAULT_ARTWORK_URL;
