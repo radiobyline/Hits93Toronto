@@ -26,7 +26,8 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const lastScrollY = useRef(0);
   const isTicking = useRef(false);
   const isDark = theme === "dark";
-  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo.svg");
+  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo-header.png");
+  const logoSrcSet = `${logoSrc} 1x, ${resolvePublicAssetUrl("branding/hits93-logo-header@2x.png")} 2x`;
 
   useEffect(() => {
     setMenuOpen(false);
@@ -111,6 +112,7 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
             <img
               className="brand-mark__logo"
               src={logoSrc}
+              srcSet={logoSrcSet}
               alt="HiTS 93 Toronto"
               width={80}
               height={54}

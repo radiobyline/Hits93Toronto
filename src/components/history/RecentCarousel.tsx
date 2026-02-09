@@ -20,17 +20,21 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
       <div className="recent-carousel__track-row" role="list">
         {tracks.map((track) => (
           <article className="recent-card" key={`${track.key}-${track.startMs}`} role="listitem">
-            <img
-              src={track.artworkUrl}
-              alt={`${track.title} artwork`}
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-              className="recent-card__image"
-              onError={(event) => {
-                event.currentTarget.src = DEFAULT_ARTWORK_URL;
-              }}
-            />
+            <div className="recent-card__artwork">
+              <img
+                src={track.artworkUrl}
+                alt={`${track.title} artwork`}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+                width={560}
+                height={560}
+                className="recent-card__image"
+                onError={(event) => {
+                  event.currentTarget.src = DEFAULT_ARTWORK_URL;
+                }}
+              />
+            </div>
             <div className="recent-card__meta">
               <h3>{track.title}</h3>
               <p>{track.artist}</p>

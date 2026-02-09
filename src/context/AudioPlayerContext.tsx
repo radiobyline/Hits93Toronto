@@ -60,6 +60,31 @@ interface NowPlayingCachePayload {
   recent: CachedTrack[];
 }
 
+function readNowPlayingCacheFromStorage(storage: Storage): { current: Track | null; recent: Track[] } | null {
+  const raw = storage.getItem(NOW_PLAYING_CACHE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  const payload = JSON.parse(raw) as Partial<NowPlayingCachePayload> | null;
+  if (!payload || payload.v !== NOW_PLAYING_CACHE_VERSION || typeof payload.storedAt !== "number") {
+    return null;
+  }
+
+  if (Date.now() - payload.storedAt > NOW_PLAYING_CACHE_MAX_AGE_MS) {
+    return null;
+  }
+
+  const current = payload.current ? fromCachedTrack(payload.current as CachedTrack) : null;
+  const recent = Array.isArray(payload.recent)
+    ? payload.recent
+        .map((item) => fromCachedTrack(item as CachedTrack))
+        .filter((track) => track.startMs > 0)
+    : [];
+
+  return { current, recent };
+}
+
 function toCachedTrack(track: Track): CachedTrack {
   return {
     key: track.key,
@@ -103,28 +128,11 @@ function fromCachedTrack(track: CachedTrack): Track {
 
 function readNowPlayingCache(): { current: Track | null; recent: Track[] } | null {
   try {
-    const raw = window.localStorage.getItem(NOW_PLAYING_CACHE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    const payload = JSON.parse(raw) as Partial<NowPlayingCachePayload> | null;
-    if (!payload || payload.v !== NOW_PLAYING_CACHE_VERSION || typeof payload.storedAt !== "number") {
-      return null;
-    }
-
-    if (Date.now() - payload.storedAt > NOW_PLAYING_CACHE_MAX_AGE_MS) {
-      return null;
-    }
-
-    const current = payload.current ? fromCachedTrack(payload.current as CachedTrack) : null;
-    const recent = Array.isArray(payload.recent)
-      ? payload.recent
-          .map((item) => fromCachedTrack(item as CachedTrack))
-          .filter((track) => track.startMs > 0)
-      : [];
-
-    return { current, recent };
+    // sessionStorage survives reloads even in Safari Private mode; use it as a first-tier cache.
+    return (
+      readNowPlayingCacheFromStorage(window.sessionStorage) ??
+      readNowPlayingCacheFromStorage(window.localStorage)
+    );
   } catch {
     return null;
   }
@@ -138,10 +146,66 @@ function writeNowPlayingCache(current: Track | null, recent: Track[]): void {
       current: current ? toCachedTrack(current) : null,
       recent: recent.map((track) => toCachedTrack(track))
     };
-    window.localStorage.setItem(NOW_PLAYING_CACHE_KEY, JSON.stringify(payload));
+    const serialized = JSON.stringify(payload);
+    window.sessionStorage.setItem(NOW_PLAYING_CACHE_KEY, serialized);
+    window.localStorage.setItem(NOW_PLAYING_CACHE_KEY, serialized);
   } catch {
     // no-op
   }
+}
+
+function isFallbackArtwork(url: string): boolean {
+  return !url || url === DEFAULT_ARTWORK_URL;
+}
+
+function mergeTrackPreservingDetails(previous: Track | null, next: Track): Track {
+  if (!previous) {
+    return next;
+  }
+
+  const sameIdentity = previous.key === next.key && previous.startMs === next.startMs;
+  if (!sameIdentity) {
+    return next;
+  }
+
+  const mergedArtwork =
+    isFallbackArtwork(next.artworkUrl) && !isFallbackArtwork(previous.artworkUrl)
+      ? previous.artworkUrl
+      : next.artworkUrl;
+
+  const mergedAlbum = next.album || previous.album;
+  const mergedPlaylistTitle = next.playlistTitle || previous.playlistTitle;
+
+  if (
+    mergedArtwork === next.artworkUrl &&
+    mergedAlbum === next.album &&
+    mergedPlaylistTitle === next.playlistTitle
+  ) {
+    return next;
+  }
+
+  return {
+    ...next,
+    artworkUrl: mergedArtwork,
+    album: mergedAlbum,
+    playlistTitle: mergedPlaylistTitle
+  };
+}
+
+function mergeTrackListPreservingDetails(previous: Track[], next: Track[]): Track[] {
+  if (!previous.length) {
+    return next;
+  }
+
+  const previousMap = new Map<string, Track>();
+  for (const track of previous) {
+    previousMap.set(`${track.key}-${track.startMs}`, track);
+  }
+
+  return next.map((track) => {
+    const prior = previousMap.get(`${track.key}-${track.startMs}`);
+    return prior ? mergeTrackPreservingDetails(prior, track) : track;
+  });
 }
 
 function isSameTrack(a: Track | null, b: Track | null): boolean {
@@ -281,8 +345,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
       const tracks = await fetchHistory(8, 0);
       const shaped = shapeHistoryForPlayer(tracks);
 
-      const nextCurrent = shaped.current;
-      const nextRecent = shaped.recent;
+      const nextCurrent = shaped.current
+        ? mergeTrackPreservingDetails(currentTrackRef.current, shaped.current)
+        : null;
+      const nextRecent = mergeTrackListPreservingDetails(recentTracksRef.current, shaped.recent);
 
       let didChange = false;
 

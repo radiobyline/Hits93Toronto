@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
   DEFAULT_ARTWORK_URL,
@@ -175,7 +175,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
   const getPreviewKey = (track: Track): string => `${track.key}-${track.startMs}`;
 
-  const stopPreview = () => {
+  const stopPreview = useCallback(() => {
     if (previewTimeoutRef.current) {
       window.clearTimeout(previewTimeoutRef.current);
     }
@@ -185,7 +185,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
       previewAudioRef.current.currentTime = 0;
     }
     setPreviewingKey(null);
-  };
+  }, []);
 
   const startPreview = async (track: Track) => {
     emitStopPreviews();
