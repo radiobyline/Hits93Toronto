@@ -2024,21 +2024,14 @@ h4 {
 
   .site-footer__follow {
     justify-content: flex-start;
-    order: -1;
-  }
-
-  .site-footer__legal-links {
-    order: 1;
   }
 
   .site-footer__llm-link--desktop {
-    display: none;
+    display: inline-flex;
   }
 
   .site-footer__llm-link--mobile {
-    display: inline-flex;
-    margin-top: 0.18rem;
-    margin-bottom: 0;
+    display: none;
   }
 
   .mini-player__controls {
