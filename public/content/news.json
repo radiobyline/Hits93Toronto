@@ -1,6 +1,6 @@
 {
   "title": "News",
-  "intro": "Station updates, release notes, and editorial posts. You can publish updates by editing this JSON or replacing it from your CMS export pipeline.",
+  "intro": "Station updates, release notes, and editorial posts.",
   "posts": [
     {
       "slug": "hello-again",
