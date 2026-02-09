@@ -168,15 +168,6 @@ a {
   text-decoration: none;
 }
 
-.site-main--home a:not(.control-pill):hover,
-.site-main--home a:not(.control-pill):focus-visible,
-.contact-page a:not(.control-pill):hover,
-.contact-page a:not(.control-pill):focus-visible {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-
 h1,
 h2,
 h3,
@@ -1241,7 +1232,7 @@ h4 {
 
 .schedule-status {
   font-family: var(--font-display);
-  font-size: 1.12rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem);
   letter-spacing: -0.02em;
 }
 
