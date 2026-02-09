@@ -60,11 +60,50 @@ function formatDuration(startMs: number, endMs: number): string {
   return `${minutes}m`;
 }
 
+function formatEndsIn(remainingMs: number): string {
+  if (remainingMs <= 0) {
+    return "Ends now";
+  }
+
+  const totalMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  }
+
+  if (minutes > 0) {
+    parts.push(`${minutes} ${minutes === 1 ? "min" : "mins"}`);
+  }
+
+  if (!parts.length) {
+    parts.push("1 min");
+  }
+
+  return `Ends in ${parts.join(" ")}`;
+}
+
+function computeProgress(startMs: number, endMs: number, nowMs: number): { progressPercent: number; remainingMs: number } {
+  const duration = endMs - startMs;
+  if (duration <= 0) {
+    return { progressPercent: 0, remainingMs: 0 };
+  }
+
+  const elapsed = Math.max(0, Math.min(duration, nowMs - startMs));
+  const remainingMs = Math.max(0, endMs - nowMs);
+  const progressPercent = (elapsed / duration) * 100;
+
+  return { progressPercent, remainingMs };
+}
+
 export function SchedulePage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Programme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, forceTick] = useState(0);
 
   const todayStart = useMemo(() => {
     const value = new Date();
@@ -97,6 +136,20 @@ export function SchedulePage(): JSX.Element {
   }, [searchParams, todayIso, minDateIso, maxDateIso]);
 
   const isTodaySelected = selectedDateIso === todayIso;
+
+  useEffect(() => {
+    if (!isTodaySelected) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      forceTick((tick) => tick + 1);
+    }, 30000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isTodaySelected]);
 
   useEffect(() => {
     const parsedDate = parseIsoDateLocal(selectedDateIso);
@@ -234,7 +287,7 @@ export function SchedulePage(): JSX.Element {
 
         <p className="status-inline">Showing {formatDateLabel(selectedDateIso, todayStart)}</p>
         {currentProgrammeId && (
-          <p className="status-inline">The current programme is pinned to the top.</p>
+          <p className="status-inline">The current program is pinned to the top.</p>
         )}
         {loading && <p className="status-inline">Loading schedule...</p>}
         {error && <p className="status-inline status-inline--error">{error}</p>}
@@ -244,6 +297,9 @@ export function SchedulePage(): JSX.Element {
             const episodePath = `/schedule/programme/${selectedDateIso}/${item.startMs}/${item.slug}`;
             const programmePath = `/schedule/programmes/${item.slug}`;
             const isCurrent = item.id === currentProgrammeId;
+            const { progressPercent, remainingMs } = isCurrent
+              ? computeProgress(item.startMs, item.endMs, Date.now())
+              : { progressPercent: 0, remainingMs: 0 };
 
             return (
               <article
@@ -256,6 +312,21 @@ export function SchedulePage(): JSX.Element {
                     {formatClock(item.startMs)} to {formatClock(item.endMs)}
                   </p>
                   <p className="schedule-list__duration">{formatDuration(item.startMs, item.endMs)}</p>
+                  {isCurrent && (
+                    <>
+                      <div
+                        className="programme-progress schedule-list__progress"
+                        role="progressbar"
+                        aria-label="Current program progress"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={progressPercent}
+                      >
+                        <span style={{ width: `${progressPercent.toFixed(2)}%` }} />
+                      </div>
+                      <p className="schedule-list__remaining">{formatEndsIn(remainingMs)}</p>
+                    </>
+                  )}
                 </div>
 
                 <Link
@@ -294,7 +365,7 @@ export function SchedulePage(): JSX.Element {
           })}
 
           {!loading && !orderedItems.length && (
-            <p className="status-inline">No programme blocks returned for this day.</p>
+            <p className="status-inline">No program blocks returned for this day.</p>
           )}
         </div>
       </section>

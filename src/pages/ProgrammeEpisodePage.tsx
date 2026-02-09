@@ -89,10 +89,49 @@ function formatMinutesAgo(trackStartMs: number): string {
   return `${minutes} min ago`;
 }
 
+function formatEndsIn(remainingMs: number): string {
+  if (remainingMs <= 0) {
+    return "Ends now";
+  }
+
+  const totalMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  }
+
+  if (minutes > 0) {
+    parts.push(`${minutes} ${minutes === 1 ? "min" : "mins"}`);
+  }
+
+  if (!parts.length) {
+    parts.push("1 min");
+  }
+
+  return `Ends in ${parts.join(" ")}`;
+}
+
+function computeProgress(startMs: number, endMs: number, nowMs: number): { progressPercent: number; remainingMs: number } {
+  const duration = endMs - startMs;
+  if (duration <= 0) {
+    return { progressPercent: 0, remainingMs: 0 };
+  }
+
+  const elapsed = Math.max(0, Math.min(duration, nowMs - startMs));
+  const remainingMs = Math.max(0, endMs - nowMs);
+  const progressPercent = (elapsed / duration) * 100;
+
+  return { progressPercent, remainingMs };
+}
+
 export function ProgrammeEpisodePage(): JSX.Element {
   const { pause } = useAudioPlayer();
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
+  const previewRequestIdRef = useRef(0);
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
   const location = useLocation();
   const [, forceClockTick] = useState(0);
@@ -162,9 +201,13 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const now = Date.now();
   const isCurrentEpisode = Boolean(state.episode && state.episode.startMs <= now && now < state.episode.endMs);
   const isFutureEpisode = Boolean(state.episode && now < state.episode.startMs);
+  const episodeProgress = state.episode
+    ? computeProgress(state.episode.startMs, state.episode.endMs, now)
+    : { progressPercent: 0, remainingMs: 0 };
 
   useEffect(() => {
     return () => {
+      previewRequestIdRef.current += 1;
       if (previewTimeoutRef.current) {
         window.clearTimeout(previewTimeoutRef.current);
       }
@@ -176,6 +219,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const getPreviewKey = (track: Track): string => `${track.key}-${track.startMs}`;
 
   const stopPreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
     if (previewTimeoutRef.current) {
       window.clearTimeout(previewTimeoutRef.current);
     }
@@ -192,6 +236,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
     const trackKey = getPreviewKey(track);
     stopPreview();
     pause();
+    const requestId = ++previewRequestIdRef.current;
 
     const cached = previewCache[trackKey];
     if (cached === undefined) {
@@ -202,6 +247,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
         [trackKey]: previewUrl
       }));
       setPreviewLoadingKey(null);
+
+      if (previewRequestIdRef.current !== requestId) {
+        return;
+      }
 
       if (!previewUrl) {
         return;
@@ -214,6 +263,10 @@ export function ProgrammeEpisodePage(): JSX.Element {
       previewTimeoutRef.current = window.setTimeout(() => {
         stopPreview();
       }, 15000);
+      return;
+    }
+
+    if (previewRequestIdRef.current !== requestId) {
       return;
     }
 
@@ -542,6 +595,21 @@ export function ProgrammeEpisodePage(): JSX.Element {
                     <strong>Time:</strong> {formatClock(state.episode.startMs)} to {formatClock(state.episode.endMs)}
                   </p>
                 </div>
+                {isCurrentEpisode && (
+                  <div className="programme-episode__progress">
+                    <div
+                      className="programme-progress"
+                      role="progressbar"
+                      aria-label="Current program progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={episodeProgress.progressPercent}
+                    >
+                      <span style={{ width: `${episodeProgress.progressPercent.toFixed(2)}%` }} />
+                    </div>
+                    <p className="programme-episode__remaining">{formatEndsIn(episodeProgress.remainingMs)}</p>
+                  </div>
+                )}
               </div>
             </article>
 

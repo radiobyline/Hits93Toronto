@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { emitStopPreviews, onStopPreviews } from "../../services/previewBus";
@@ -29,6 +29,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
 
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
+  const previewRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (!isOpen) {
@@ -66,6 +67,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
 
   useEffect(() => {
     return () => {
+      previewRequestIdRef.current += 1;
       if (previewTimeoutRef.current) {
         window.clearTimeout(previewTimeoutRef.current);
       }
@@ -74,40 +76,35 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
     };
   }, []);
 
+  const selectedTrack = useMemo(() => {
+    return results.find((track) => track.id === selectedTrackId) ?? null;
+  }, [results, selectedTrackId]);
+
+  const stopPreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
+    if (previewTimeoutRef.current) {
+      window.clearTimeout(previewTimeoutRef.current);
+    }
+    previewAudioRef.current?.pause();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewingTrackId(null);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       return;
     }
 
-    if (previewTimeoutRef.current) {
-      window.clearTimeout(previewTimeoutRef.current);
-    }
-    previewAudioRef.current?.pause();
-    if (previewAudioRef.current) {
-      previewAudioRef.current.currentTime = 0;
-    }
-    setPreviewingTrackId(null);
-  }, [isOpen]);
+    stopPreview();
+  }, [isOpen, stopPreview]);
 
-  const selectedTrack = useMemo(() => {
-    return results.find((track) => track.id === selectedTrackId) ?? null;
-  }, [results, selectedTrackId]);
-
-  const stopPreview = () => {
-    if (previewTimeoutRef.current) {
-      window.clearTimeout(previewTimeoutRef.current);
-    }
-    previewAudioRef.current?.pause();
-    if (previewAudioRef.current) {
-      previewAudioRef.current.currentTime = 0;
-    }
-    setPreviewingTrackId(null);
-  };
-
-  const startPreview = async (track: RequestLibraryTrack) => {
+  const startPreview = useCallback(async (track: RequestLibraryTrack) => {
     emitStopPreviews();
     stopPreview();
     pause();
+    const requestId = ++previewRequestIdRef.current;
 
     const cached = previewCache[track.id];
     if (cached === undefined) {
@@ -118,6 +115,10 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
         [track.id]: previewUrl
       }));
       setPreviewLoadingId(null);
+
+      if (previewRequestIdRef.current !== requestId) {
+        return;
+      }
 
       if (!previewUrl) {
         setStatus("No preview available for this track right now.");
@@ -134,6 +135,10 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
       return;
     }
 
+    if (previewRequestIdRef.current !== requestId) {
+      return;
+    }
+
     if (!cached) {
       setStatus("No preview available for this track right now.");
       return;
@@ -146,7 +151,7 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps): JSX.Elemen
     previewTimeoutRef.current = window.setTimeout(() => {
       stopPreview();
     }, PREVIEW_DURATION_MS);
-  };
+  }, [pause, previewCache, stopPreview]);
 
   useEffect(() => {
     return onStopPreviews(() => {

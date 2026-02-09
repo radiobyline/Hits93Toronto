@@ -35,6 +35,9 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
   const artworkSrc = currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL;
+  const voteSummary = currentVote
+    ? `You already ${currentVote === "up" ? "liked" : "disliked"} this track. Thanks for rating it.`
+    : voteNote;
 
   return (
     <>
@@ -96,7 +99,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                       <span>Dislike</span>
                     </button>
                   </div>
-                  <p className="status-inline">{currentVote ? `Vote saved: ${currentVote}` : voteNote}</p>
+                  {(currentVote || voteNote) && <p className="status-inline">{voteSummary}</p>}
                 </>
               ) : (
                 <p className="status-inline">Rating is unavailable for this track right now.</p>

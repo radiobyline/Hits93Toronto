@@ -5,12 +5,25 @@ export type ThemeMode = "light" | "dark";
 const STORAGE_KEY = "hits93toronto:theme";
 
 function getInitialTheme(): ThemeMode {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved === "light" || saved === "dark") {
-    return saved;
+  const attr = document.documentElement.getAttribute("data-theme");
+  if (attr === "light" || attr === "dark") {
+    return attr;
   }
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+  } catch {
+    // no-op
+  }
+
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch {
+    return "light";
+  }
 }
 
 export function useTheme(): { theme: ThemeMode; toggleTheme: () => void } {
@@ -18,7 +31,11 @@ export function useTheme(): { theme: ThemeMode; toggleTheme: () => void } {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem(STORAGE_KEY, theme);
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      // no-op
+    }
   }, [theme]);
 
   return {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL, HISTORY_PAGE_SIZE } from "../config/constants";
 import { PlayIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
@@ -26,6 +26,7 @@ export function RecentPage(): JSX.Element {
   const { pause } = useAudioPlayer();
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
+  const previewRequestIdRef = useRef(0);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,7 @@ export function RecentPage(): JSX.Element {
 
   useEffect(() => {
     return () => {
+      previewRequestIdRef.current += 1;
       if (previewTimeoutRef.current) {
         window.clearTimeout(previewTimeoutRef.current);
       }
@@ -65,9 +67,10 @@ export function RecentPage(): JSX.Element {
     };
   }, []);
 
-  const getPreviewKey = (track: Track): string => `${track.key}-${track.startMs}`;
+  const getPreviewKey = useCallback((track: Track): string => `${track.key}-${track.startMs}`, []);
 
-  const stopPreview = () => {
+  const stopPreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
     if (previewTimeoutRef.current) {
       window.clearTimeout(previewTimeoutRef.current);
     }
@@ -76,13 +79,14 @@ export function RecentPage(): JSX.Element {
       previewAudioRef.current.currentTime = 0;
     }
     setPreviewingKey(null);
-  };
+  }, []);
 
-  const startPreview = async (track: Track) => {
+  const startPreview = useCallback(async (track: Track) => {
     emitStopPreviews();
     const trackKey = getPreviewKey(track);
     stopPreview();
     pause();
+    const requestId = ++previewRequestIdRef.current;
 
     const cached = previewCache[trackKey];
     if (cached === undefined) {
@@ -93,6 +97,10 @@ export function RecentPage(): JSX.Element {
         [trackKey]: previewUrl
       }));
       setPreviewLoadingKey(null);
+
+      if (previewRequestIdRef.current !== requestId) {
+        return;
+      }
 
       if (!previewUrl) {
         return;
@@ -108,6 +116,10 @@ export function RecentPage(): JSX.Element {
       return;
     }
 
+    if (previewRequestIdRef.current !== requestId) {
+      return;
+    }
+
     if (!cached) {
       return;
     }
@@ -119,7 +131,7 @@ export function RecentPage(): JSX.Element {
     previewTimeoutRef.current = window.setTimeout(() => {
       stopPreview();
     }, 15000);
-  };
+  }, [getPreviewKey, pause, previewCache, stopPreview]);
 
   useEffect(() => {
     return onStopPreviews(() => {

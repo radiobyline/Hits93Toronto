@@ -73,20 +73,80 @@ body {
   overflow-x: clip;
 }
 
-#root:empty::before {
-  content: "";
-  display: block;
+#boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+#boot-overlay .boot-shell {
   min-height: var(--viewport-height);
-  background:
-    linear-gradient(var(--chrome-bg), var(--chrome-bg)) 0 0 / 100% var(--header-height) no-repeat,
-    linear-gradient(
-        138deg,
-        color-mix(in srgb, var(--surface), #fefefe 22%),
-        var(--surface)
-      )
-      50% calc(var(--header-height) + 1rem) / min(1340px, 100% - 1.8rem)
-      calc(var(--viewport-height) - var(--header-height) - 2rem) no-repeat;
-  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#boot-overlay .boot-shell__header {
+  height: var(--header-height);
+  background: var(--chrome-bg);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+#boot-overlay .boot-shell__body {
+  padding: 1rem 0 3rem;
+  display: grid;
+  align-content: start;
+}
+
+#boot-overlay .boot-hero {
+  margin-top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+#boot-overlay .boot-hero__art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: calc(var(--radius-xl) - 6px);
+  border: 1px solid var(--surface-border);
+  background-color: var(--bg-elevated);
+  background-image: var(--boot-artwork);
+  background-size: cover;
+  background-position: center;
+}
+
+#boot-overlay .boot-hero__meta {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+#boot-overlay .boot-hero__overline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+#boot-overlay .boot-hero__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+}
+
+#boot-overlay .boot-hero__artist {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  overflow-wrap: anywhere;
 }
 
 body {
@@ -216,6 +276,14 @@ h4 {
   justify-content: flex-start;
   gap: 0.42rem;
   flex-wrap: wrap;
+}
+
+.site-nav--desktop {
+  margin-left: 0.35rem;
+}
+
+.brand-mark {
+  margin-right: 0.25rem;
 }
 
 .site-nav--mobile {
@@ -566,10 +634,33 @@ h4 {
 }
 
 .control-pill--play {
-  background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent-alt), var(--accent) 48%));
-  border-color: transparent;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+        120deg,
+        var(--accent),
+        color-mix(in srgb, var(--accent-alt), var(--accent) 48%)
+      )
+      padding-box,
+    linear-gradient(
+        120deg,
+        var(--accent),
+        color-mix(in srgb, var(--accent-alt), var(--accent) 48%)
+      )
+      border-box;
+  background-clip: padding-box, border-box;
   color: #fff;
   padding-inline: 1.12rem;
+}
+
+.control-pill--play:hover:not(:disabled),
+.control-pill--play:focus-visible:not(:disabled) {
+  border-color: transparent;
+}
+
+.control-pill--play:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-alt), #fff 12%);
+  outline-offset: 2px;
 }
 
 .control-pill--small {
@@ -583,11 +674,29 @@ h4 {
 }
 
 .control-pill--request-primary {
-  border-color: color-mix(in srgb, var(--accent), transparent 30%);
-  background: linear-gradient(120deg, color-mix(in srgb, var(--accent), transparent 18%), color-mix(in srgb, var(--accent-alt), transparent 58%));
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--accent), transparent 18%),
+        color-mix(in srgb, var(--accent-alt), transparent 58%)
+      )
+      padding-box,
+    linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--accent), transparent 28%),
+        color-mix(in srgb, var(--accent-alt), transparent 64%)
+      )
+      border-box;
+  background-clip: padding-box, border-box;
   color: color-mix(in srgb, var(--text-inverse), #fff 46%);
   min-height: 44px;
   font-size: 0.92rem;
+}
+
+.control-pill--request-primary:hover:not(:disabled),
+.control-pill--request-primary:focus-visible:not(:disabled) {
+  border-color: transparent;
 }
 
 .volume-control {
@@ -902,10 +1011,9 @@ h4 {
   background: linear-gradient(120deg, var(--accent), var(--accent-alt));
 }
 
+/* Full Schedule button was moved into the section header. */
 .programme-block__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.56rem;
+  display: none;
 }
 
 .label-mobile {
@@ -1156,6 +1264,16 @@ h4 {
   font-size: 0.83rem;
 }
 
+.schedule-list__progress {
+  margin-top: 0.3rem;
+}
+
+.schedule-list__remaining {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 .schedule-list__art-link {
   display: block;
   border-radius: var(--radius-sm);
@@ -1282,6 +1400,18 @@ h4 {
   margin: 0;
 }
 
+.programme-episode__progress {
+  margin-top: 0.6rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.programme-episode__remaining {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 .programme-episode-list {
   display: grid;
   gap: 0.72rem;
@@ -1300,7 +1430,10 @@ h4 {
 }
 
 .programme-episode-list__item--current {
-  border-color: color-mix(in srgb, var(--accent-alt), var(--surface-border) 25%);
+  border-color: color-mix(in srgb, var(--accent), var(--surface-border) 22%);
+  background:
+    radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--accent), transparent 90%), transparent 52%),
+    linear-gradient(122deg, color-mix(in srgb, var(--accent), transparent 93%), color-mix(in srgb, var(--surface-strong), transparent 0%));
 }
 
 .programme-episode-list__item h4 {
@@ -1613,7 +1746,7 @@ h4 {
 }
 
 .site-footer--with-mini {
-  padding-bottom: calc(8.2rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(9.2rem + env(safe-area-inset-bottom));
 }
 
 .site-footer__inner {
@@ -1919,6 +2052,10 @@ h4 {
     width: min(1220px, 100% - 1rem);
   }
 
+  #boot-overlay .boot-hero {
+    grid-template-columns: 1fr;
+  }
+
   /* Backdrop blurs are expensive on iOS Safari; disable on smaller screens for smoother scrolling. */
   .site-header {
     backdrop-filter: none;
@@ -2045,7 +2182,7 @@ h4 {
   }
 
   .site-footer--with-mini {
-    padding-bottom: calc(8.2rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(9.2rem + env(safe-area-inset-bottom));
   }
 
   .site-footer__col {
@@ -2098,6 +2235,11 @@ h4 {
     flex: 0 0 auto;
     min-width: 44px;
     padding-inline: 0.52rem;
+  }
+
+  .mini-player__vote-button,
+  .mini-player__note {
+    display: none;
   }
 
   .site-main--with-mini {
@@ -2159,7 +2301,7 @@ h4 {
   }
 
   .site-footer--with-mini {
-    padding-bottom: calc(9.1rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(10.1rem + env(safe-area-inset-bottom));
   }
 
   .site-footer__legal-links {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL } from "../config/constants";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
@@ -24,6 +24,7 @@ export function JukeboxPage(): JSX.Element {
 
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | undefined>();
+  const previewRequestIdRef = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -55,6 +56,7 @@ export function JukeboxPage(): JSX.Element {
 
   useEffect(() => {
     return () => {
+      previewRequestIdRef.current += 1;
       if (previewTimeoutRef.current) {
         window.clearTimeout(previewTimeoutRef.current);
       }
@@ -67,7 +69,8 @@ export function JukeboxPage(): JSX.Element {
     return results.find((track) => track.id === selectedTrackId) ?? null;
   }, [results, selectedTrackId]);
 
-  const stopPreview = () => {
+  const stopPreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
     if (previewTimeoutRef.current) {
       window.clearTimeout(previewTimeoutRef.current);
     }
@@ -77,12 +80,13 @@ export function JukeboxPage(): JSX.Element {
       previewAudioRef.current.currentTime = 0;
     }
     setPreviewingTrackId(null);
-  };
+  }, []);
 
-  const startPreview = async (track: RequestLibraryTrack) => {
+  const startPreview = useCallback(async (track: RequestLibraryTrack) => {
     emitStopPreviews();
     stopPreview();
     pause();
+    const requestId = ++previewRequestIdRef.current;
 
     const cached = previewCache[track.id];
     if (cached === undefined) {
@@ -93,6 +97,10 @@ export function JukeboxPage(): JSX.Element {
         [track.id]: previewUrl
       }));
       setPreviewLoadingId(null);
+
+      if (previewRequestIdRef.current !== requestId) {
+        return;
+      }
 
       if (!previewUrl) {
         setStatus("No preview available for this track right now.");
@@ -109,6 +117,10 @@ export function JukeboxPage(): JSX.Element {
       return;
     }
 
+    if (previewRequestIdRef.current !== requestId) {
+      return;
+    }
+
     if (!cached) {
       setStatus("No preview available for this track right now.");
       return;
@@ -121,7 +133,7 @@ export function JukeboxPage(): JSX.Element {
     previewTimeoutRef.current = window.setTimeout(() => {
       stopPreview();
     }, PREVIEW_DURATION_MS);
-  };
+  }, [pause, previewCache, stopPreview]);
 
   useEffect(() => {
     return onStopPreviews(() => {

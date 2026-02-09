@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-CA">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,19 +18,73 @@
 
     <script>
       (function () {
+        var storageKey = "hits93toronto:theme";
+        var theme = "light";
+        var storedTheme = null;
         try {
-          var storageKey = "hits93toronto:theme";
-          var stored = localStorage.getItem(storageKey);
-          var theme =
-            stored === "dark" || stored === "light"
-              ? stored
-              : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+          storedTheme = localStorage.getItem(storageKey);
+        } catch (e) {
+          storedTheme = null;
+        }
+
+        if (storedTheme === "dark" || storedTheme === "light") {
+          theme = storedTheme;
+        } else {
+          try {
+            theme =
+              window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
                 ? "dark"
                 : "light";
-          document.documentElement.setAttribute("data-theme", theme);
-          document.documentElement.classList.add("preload");
+          } catch (e) {
+            theme = "light";
+          }
+        }
+
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.classList.add("preload");
+        document.documentElement.style.setProperty("--boot-artwork", "url('./default-artwork.png')");
+
+        // Seed initial paint with last-known now playing metadata/artwork to avoid placeholder flashes.
+        var cacheKey = "hits93toronto:nowPlaying";
+        var raw = null;
+        try {
+          raw = sessionStorage.getItem(cacheKey);
         } catch (e) {
-          // no-op
+          raw = null;
+        }
+        if (!raw) {
+          try {
+            raw = localStorage.getItem(cacheKey);
+          } catch (e) {
+            raw = null;
+          }
+        }
+        if (raw) {
+          try {
+            var payload = JSON.parse(raw);
+            var current = payload && payload.current;
+            if (current && typeof current === "object") {
+              if (typeof current.title === "string") {
+                document.documentElement.setAttribute("data-boot-title", current.title);
+              }
+              if (typeof current.artist === "string") {
+                document.documentElement.setAttribute("data-boot-artist", current.artist);
+              }
+              if (typeof current.artworkUrl === "string" && current.artworkUrl) {
+                var abs = current.artworkUrl;
+                try {
+                  abs = new URL(abs, window.location.href).toString();
+                } catch (e) {
+                  // keep original
+                }
+                // Escape single quotes for CSS url('...') usage.
+                var safe = abs.replace(/'/g, \"%27\");
+                document.documentElement.style.setProperty("--boot-artwork", \"url('\" + safe + \"')\");
+              }
+            }
+          } catch (e) {
+            // no-op
+          }
         }
       })();
     </script>
@@ -98,6 +152,36 @@
     <title>Hits 93 Toronto | Listen Live</title>
   </head>
   <body>
+    <div id="boot-overlay" aria-hidden="true">
+      <div class="boot-shell">
+        <div class="boot-shell__header" role="presentation"></div>
+        <div class="boot-shell__body container container--hero">
+          <section class="boot-hero" aria-label="Loading player">
+            <div class="boot-hero__art" role="presentation"></div>
+            <div class="boot-hero__meta">
+              <p class="boot-hero__overline">Streaming Worldwide From Toronto</p>
+              <strong class="boot-hero__title" id="boot-title">Hits 93 Toronto</strong>
+              <span class="boot-hero__artist" id="boot-artist">Loading now playing...</span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        try {
+          var title = document.documentElement.getAttribute("data-boot-title");
+          var artist = document.documentElement.getAttribute("data-boot-artist");
+          var titleNode = document.getElementById("boot-title");
+          var artistNode = document.getElementById("boot-artist");
+          if (titleNode && title) titleNode.textContent = title;
+          if (artistNode && artist) artistNode.textContent = artist;
+        } catch (e) {
+          // no-op
+        }
+      })();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

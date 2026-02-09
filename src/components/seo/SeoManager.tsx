@@ -297,7 +297,7 @@ export function SeoManager(): JSX.Element | null {
         "https://linkedin.com/company/Hits93Toronto"
       ],
       areaServed: "Worldwide",
-      inLanguage: "en",
+      knowsLanguage: "en-CA",
       description: seo.description
     };
     script.textContent = JSON.stringify(jsonLd);

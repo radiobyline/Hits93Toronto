@@ -26,8 +26,12 @@ export function Header({ theme, onToggleTheme }: HeaderProps): JSX.Element {
   const lastScrollY = useRef(0);
   const isTicking = useRef(false);
   const isDark = theme === "dark";
-  const logoSrc = resolvePublicAssetUrl("branding/hits93-logo-header.png");
-  const logoSrcSet = `${logoSrc} 1x, ${resolvePublicAssetUrl("branding/hits93-logo-header@2x.png")} 2x`;
+  const logoSrc = resolvePublicAssetUrl(
+    isDark ? "branding/hits93-logo-header-dark.png" : "branding/hits93-logo-header-light.png"
+  );
+  const logoSrcSet = `${logoSrc} 1x, ${resolvePublicAssetUrl(
+    isDark ? "branding/hits93-logo-header-dark@2x.png" : "branding/hits93-logo-header-light@2x.png"
+  )} 2x`;
 
   useEffect(() => {
     setMenuOpen(false);

@@ -21,6 +21,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // Allow transitions after the first paint to avoid theme/FOUC jitter on initial load.
 window.requestAnimationFrame(() => {
   document.documentElement.classList.remove("preload");
+  window.requestAnimationFrame(() => {
+    document.getElementById("boot-overlay")?.remove();
+  });
 });
 
 if (import.meta.env.PROD) {

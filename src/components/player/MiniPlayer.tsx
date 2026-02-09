@@ -14,6 +14,10 @@ export function MiniPlayer(): JSX.Element {
   } = useAudioPlayer();
   const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
 
+  const voteSummary = currentVote
+    ? `You already ${currentVote === "up" ? "liked" : "disliked"} this track. Thanks for sharing your opinion.`
+    : voteNote;
+
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
       <div className="mini-player__meta">
@@ -52,7 +56,7 @@ export function MiniPlayer(): JSX.Element {
           <>
             <button
               type="button"
-              className="control-pill control-pill--small"
+              className="control-pill control-pill--small mini-player__vote-button"
               onClick={() => {
                 castVote("up");
               }}
@@ -63,7 +67,7 @@ export function MiniPlayer(): JSX.Element {
             </button>
             <button
               type="button"
-              className="control-pill control-pill--small"
+              className="control-pill control-pill--small mini-player__vote-button"
               onClick={() => {
                 castVote("down");
               }}
@@ -79,8 +83,8 @@ export function MiniPlayer(): JSX.Element {
 
       {(currentVote || voteNote || isBuffering) && (
         <p className="mini-player__note">
-          {currentVote ? `Voted: ${currentVote}` : voteNote}
-          {isBuffering ? " • Buffering..." : ""}
+          {voteSummary}
+          {isBuffering ? (voteSummary ? " • Buffering..." : "Buffering...") : ""}
         </p>
       )}
     </aside>

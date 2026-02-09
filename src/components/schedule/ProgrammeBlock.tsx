@@ -34,6 +34,10 @@ export function ProgrammeBlock(): JSX.Element {
     <section className="programme-block">
       <div className="section-heading">
         <h2>On Air &amp; Next</h2>
+        <Link to="/schedule" className="control-pill control-pill--small">
+          <span className="label-desktop">Full Schedule</span>
+          <span className="label-mobile">Schedule</span>
+        </Link>
       </div>
       <p className="programme-block__intro">What&apos;s on now and what&apos;s next.</p>
 
@@ -87,13 +91,6 @@ export function ProgrammeBlock(): JSX.Element {
                 {next ? `${formatClock(next.startMs)} to ${formatClock(next.endMs)}` : "Starts soon"}
               </p>
             </article>
-          </div>
-
-          <div className="programme-block__links">
-            <Link to="/schedule" className="control-pill control-pill--small">
-              <span className="label-desktop">Full Schedule</span>
-              <span className="label-mobile">Schedule</span>
-            </Link>
           </div>
 
           <section className="programme-block__cta-grid">

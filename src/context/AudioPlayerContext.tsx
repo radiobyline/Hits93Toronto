@@ -320,6 +320,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const hasInteractedRef = useRef(false);
+  const shouldSurfacePlaybackErrorsRef = useRef(false);
+  const isTearingDownRef = useRef(false);
   const [bootstrapCache] = useState(() => readNowPlayingCache());
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -335,6 +338,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
 
   const currentTrackRef = useRef<Track | null>(bootstrapCache?.current ?? null);
   const recentTracksRef = useRef<Track[]>(bootstrapCache?.recent ?? []);
+
+  useEffect(() => {
+    hasInteractedRef.current = hasInteracted;
+  }, [hasInteracted]);
 
   const loadMetadataOnce = useCallback(async () => {
     try {
@@ -431,6 +438,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     };
 
     const silenceAndStop = () => {
+      shouldSurfacePlaybackErrorsRef.current = false;
       if (stopTimeoutId) {
         window.clearTimeout(stopTimeoutId);
       }
@@ -474,6 +482,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     };
 
     const handleError = () => {
+      if (isTearingDownRef.current || !hasInteractedRef.current || !shouldSurfacePlaybackErrorsRef.current) {
+        return;
+      }
       setPlaybackError("Stream unavailable or blocked. Check HTTPS stream/CORS.");
       setIsPlaying(false);
       setIsBuffering(false);
@@ -496,18 +507,20 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     audioElementRef.current = audio;
 
     return () => {
+      isTearingDownRef.current = true;
+      shouldSurfacePlaybackErrorsRef.current = false;
       if (stopTimeoutId) {
         window.clearTimeout(stopTimeoutId);
       }
       window.removeEventListener("pagehide", silenceAndStop);
       window.removeEventListener("beforeunload", silenceAndStop);
-      stopNow();
       audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("waiting", handleWaiting);
       audio.removeEventListener("stalled", handleWaiting);
       audio.removeEventListener("error", handleError);
       audio.removeEventListener("volumechange", handleVolumeChange);
+      stopNow();
       audioElementRef.current = null;
       try {
         mediaSourceRef.current?.disconnect();
@@ -592,6 +605,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): JSX.
     ensureAudioGraph();
 
     setHasInteracted(true);
+    hasInteractedRef.current = true;
+    shouldSurfacePlaybackErrorsRef.current = true;
+    isTearingDownRef.current = false;
     setPlaybackError(null);
 
     try {
