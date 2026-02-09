@@ -29,3 +29,15 @@ export const REQUEST_WITH_TAGS_ONLY = true;
 export const REQUEST_ONLY_REQUESTABLE = true;
 export const REQUEST_IP_TIMEOUT = true;
 export const REQUEST_TRACK_TIMEOUT = true;
+
+// Spotify playlist export (optional)
+// Create a Spotify app and paste the client ID here. This is safe to ship client-side.
+// Redirect URI to allowlist in Spotify Dashboard:
+// - https://hits93.com/
+// - http://localhost:5173/
+export const SPOTIFY_CLIENT_ID: string = "";
+
+// Apple Music playlist export (optional)
+// Do NOT ship Apple developer tokens client-side. Provide an endpoint (e.g., Cloudflare Worker)
+// that returns a short-lived Apple Music developer token (JWT).
+export const APPLE_MUSIC_DEVELOPER_TOKEN_ENDPOINT: string = "";

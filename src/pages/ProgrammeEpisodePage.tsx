@@ -11,9 +11,12 @@ import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
+import { exportEpisodePlaylistToAppleMusic, isAppleMusicConfigured } from "../services/appleMusicService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
+import { beginSpotifyLogin, getValidSpotifyAccessToken, isSpotifyConfigured } from "../services/spotifyAuthService";
 import { getProgrammeLongDescriptionBySlug } from "../services/programmeCatalog";
+import { exportEpisodePlaylistToSpotify, type SpotifyPlaylistExportResult } from "../services/spotifyPlaylistService";
 import type { Track } from "../types";
 import { formatIsoDateLocal, parseIsoDateLocal, resolveProgrammeSlug, shiftLocalDays } from "../utils/programme";
 import { formatClock } from "../utils/time";
@@ -56,6 +59,18 @@ function isEpisodeOnAir(episode: Programme): boolean {
   return episode.startMs <= now && now < episode.endMs;
 }
 
+function formatEpisodePlaylistDate(ms: number): string {
+  return new Date(ms).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function buildEpisodePlaylistTitle(episode: Programme): string {
+  return `Hits 93 Toronto's ${episode.name} Episode on ${formatEpisodePlaylistDate(episode.startMs)}`;
+}
+
 function formatMinutesAgo(trackStartMs: number): string {
   const deltaMs = Date.now() - trackStartMs;
   if (deltaMs <= 60 * 1000) {
@@ -91,6 +106,16 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const [previewCache, setPreviewCache] = useState<Record<string, string | null>>({});
   const [previewingKey, setPreviewingKey] = useState<string | null>(null);
   const [previewLoadingKey, setPreviewLoadingKey] = useState<string | null>(null);
+  const [spotifyExporting, setSpotifyExporting] = useState(false);
+  const [spotifyExportError, setSpotifyExportError] = useState<string | null>(null);
+  const [spotifyExportResult, setSpotifyExportResult] = useState<SpotifyPlaylistExportResult | null>(null);
+  const [appleExporting, setAppleExporting] = useState(false);
+  const [appleExportError, setAppleExportError] = useState<string | null>(null);
+  const [appleExportResult, setAppleExportResult] = useState<{
+    playlistId: string;
+    matchedTracks: number;
+    totalTracks: number;
+  } | null>(null);
 
   const parsedDate = useMemo(() => parseIsoDateLocal(params.dateIso ?? ""), [params.dateIso]);
   const parsedStartMs = useMemo(() => Number(params.startMs), [params.startMs]);
@@ -198,6 +223,77 @@ export function ProgrammeEpisodePage(): JSX.Element {
       stopPreview();
     });
   }, [stopPreview]);
+
+  const exportToSpotify = async () => {
+    if (!state.episode) {
+      return;
+    }
+
+    setSpotifyExportError(null);
+    setSpotifyExportResult(null);
+    setSpotifyExporting(true);
+
+    try {
+      if (!isSpotifyConfigured()) {
+        throw new Error("Spotify export is not configured yet.");
+      }
+
+      const accessToken = await getValidSpotifyAccessToken();
+      if (!accessToken) {
+        const returnTo = `${location.pathname}${location.search}`;
+        await beginSpotifyLogin(returnTo || "/");
+        return;
+      }
+
+      const playlistName = buildEpisodePlaylistTitle(state.episode);
+      const description = `Tracks played on Hits 93 Toronto during ${state.episode.name} (${formatEpisodePlaylistDate(
+        state.episode.startMs
+      )}).`;
+
+      const result = await exportEpisodePlaylistToSpotify(accessToken, playlistName, description, state.tracks);
+      setSpotifyExportResult(result);
+
+      if (result.playlistUrl) {
+        window.open(result.playlistUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (error) {
+      setSpotifyExportError(
+        error instanceof Error ? error.message : "Unable to export this episode to Spotify right now."
+      );
+    } finally {
+      setSpotifyExporting(false);
+    }
+  };
+
+  const exportToAppleMusic = async () => {
+    if (!state.episode) {
+      return;
+    }
+
+    setAppleExportError(null);
+    setAppleExportResult(null);
+    setAppleExporting(true);
+
+    try {
+      if (!isAppleMusicConfigured()) {
+        throw new Error("Apple Music export is not configured yet.");
+      }
+
+      const playlistName = buildEpisodePlaylistTitle(state.episode);
+      const description = `Tracks played on Hits 93 Toronto during ${state.episode.name} (${formatEpisodePlaylistDate(
+        state.episode.startMs
+      )}).`;
+
+      const result = await exportEpisodePlaylistToAppleMusic(playlistName, description, state.tracks);
+      setAppleExportResult(result);
+    } catch (error) {
+      setAppleExportError(
+        error instanceof Error ? error.message : "Unable to export this episode to Apple Music right now."
+      );
+    } finally {
+      setAppleExporting(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -410,8 +506,60 @@ export function ProgrammeEpisodePage(): JSX.Element {
             <section className="programme-episode__history">
               <div className="section-heading">
                 <h3>Tracks Played</h3>
+                <div className="section-heading__actions">
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small"
+                    disabled={spotifyExporting || !state.tracks.length || !isSpotifyConfigured()}
+                    title={
+                      !isSpotifyConfigured()
+                        ? "Spotify export requires a configured SPOTIFY_CLIENT_ID."
+                        : !state.tracks.length
+                          ? "No tracks are available for this episode yet."
+                          : ""
+                    }
+                    onClick={() => {
+                      void exportToSpotify();
+                    }}
+                  >
+                    {spotifyExporting ? "Exporting..." : "Add to Spotify"}
+                  </button>
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small"
+                    disabled={appleExporting || !state.tracks.length || !isAppleMusicConfigured()}
+                    title={
+                      !isAppleMusicConfigured()
+                        ? "Apple Music export requires a configured developer-token endpoint."
+                        : !state.tracks.length
+                          ? "No tracks are available for this episode yet."
+                          : ""
+                    }
+                    onClick={() => {
+                      void exportToAppleMusic();
+                    }}
+                  >
+                    {appleExporting ? "Exporting..." : "Add to Apple Music"}
+                  </button>
+                </div>
               </div>
               {historyError && <p className="status-inline status-inline--error">{historyError}</p>}
+              {spotifyExportError && (
+                <p className="status-inline status-inline--error">{spotifyExportError}</p>
+              )}
+              {spotifyExportResult && (
+                <p className="status-inline">
+                  Spotify playlist created. Added {spotifyExportResult.matchedTracks} of{" "}
+                  {spotifyExportResult.totalTracks} tracks.
+                </p>
+              )}
+              {appleExportError && <p className="status-inline status-inline--error">{appleExportError}</p>}
+              {appleExportResult && (
+                <p className="status-inline">
+                  Apple Music playlist created. Added {appleExportResult.matchedTracks} of{" "}
+                  {appleExportResult.totalTracks} tracks.
+                </p>
+              )}
 
               <div className="recent-list">
                 {state.tracks.map((track) => {
