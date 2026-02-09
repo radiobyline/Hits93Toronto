@@ -695,6 +695,10 @@ h4 {
   flex-wrap: wrap;
 }
 
+.section-heading__tooltip {
+  display: inline-flex;
+}
+
 .section-heading h2,
 .section-heading h3 {
   margin: 0;

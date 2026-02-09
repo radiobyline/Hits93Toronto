@@ -95,6 +95,7 @@ export function ProgrammeEpisodePage(): JSX.Element {
   const previewTimeoutRef = useRef<number | undefined>();
   const params = useParams<{ dateIso?: string; startMs?: string; slug?: string }>();
   const location = useLocation();
+  const [, forceClockTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -135,21 +136,32 @@ export function ProgrammeEpisodePage(): JSX.Element {
     return stateEpisode.startMs === parsedStartMs ? stateEpisode : null;
   }, [routeState, parsedStartMs]);
 
-  const isCurrentEpisode = useMemo(() => {
-    if (!state.episode) {
-      return false;
+  useEffect(() => {
+    const episode = state.episode;
+    if (!episode) {
+      return;
     }
 
     const now = Date.now();
-    return state.episode.startMs <= now && now < state.episode.endMs;
-  }, [state.episode]);
+    const nextBoundaryMs = now < episode.startMs ? episode.startMs : now < episode.endMs ? episode.endMs : null;
 
-  const isFutureEpisode = useMemo(() => {
-    if (!state.episode) {
-      return false;
+    if (!nextBoundaryMs) {
+      return;
     }
-    return Date.now() < state.episode.startMs;
-  }, [state.episode]);
+
+    const delay = Math.max(250, nextBoundaryMs - now + 250);
+    const timeoutId = window.setTimeout(() => {
+      forceClockTick((tick) => tick + 1);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [state.episode?.startMs, state.episode?.endMs]);
+
+  const now = Date.now();
+  const isCurrentEpisode = Boolean(state.episode && state.episode.startMs <= now && now < state.episode.endMs);
+  const isFutureEpisode = Boolean(state.episode && now < state.episode.startMs);
 
   useEffect(() => {
     return () => {
@@ -229,6 +241,11 @@ export function ProgrammeEpisodePage(): JSX.Element {
       return;
     }
 
+    if (isEpisodeOnAir(state.episode)) {
+      setSpotifyExportError("Available after the broadcast ends.");
+      return;
+    }
+
     setSpotifyExportError(null);
     setSpotifyExportResult(null);
     setSpotifyExporting(true);
@@ -267,6 +284,11 @@ export function ProgrammeEpisodePage(): JSX.Element {
 
   const exportToAppleMusic = async () => {
     if (!state.episode) {
+      return;
+    }
+
+    if (isEpisodeOnAir(state.episode)) {
+      setAppleExportError("Available after the broadcast ends.");
       return;
     }
 
@@ -461,6 +483,26 @@ export function ProgrammeEpisodePage(): JSX.Element {
     ? state.archive.filter((item) => item.startMs !== state.episode?.startMs).slice(0, 8)
     : [];
 
+  const spotifyDisabled =
+    spotifyExporting || !state.tracks.length || !isSpotifyConfigured() || Boolean(state.episode && isEpisodeOnAir(state.episode));
+  const spotifyDisabledReason = !isSpotifyConfigured()
+    ? "Spotify export requires a configured SPOTIFY_CLIENT_ID."
+    : !state.tracks.length
+      ? "No tracks are available for this episode yet."
+      : state.episode && isEpisodeOnAir(state.episode)
+        ? "Available after the broadcast ends."
+        : undefined;
+
+  const appleDisabled =
+    appleExporting || !state.tracks.length || !isAppleMusicConfigured() || Boolean(state.episode && isEpisodeOnAir(state.episode));
+  const appleDisabledReason = !isAppleMusicConfigured()
+    ? "Apple Music export requires a configured developer-token endpoint."
+    : !state.tracks.length
+      ? "No tracks are available for this episode yet."
+      : state.episode && isEpisodeOnAir(state.episode)
+        ? "Available after the broadcast ends."
+        : undefined;
+
   return (
     <div className="container">
       <section className="page-section programme-episode">
@@ -507,40 +549,30 @@ export function ProgrammeEpisodePage(): JSX.Element {
               <div className="section-heading">
                 <h3>Tracks Played</h3>
                 <div className="section-heading__actions">
-                  <button
-                    type="button"
-                    className="control-pill control-pill--small"
-                    disabled={spotifyExporting || !state.tracks.length || !isSpotifyConfigured()}
-                    title={
-                      !isSpotifyConfigured()
-                        ? "Spotify export requires a configured SPOTIFY_CLIENT_ID."
-                        : !state.tracks.length
-                          ? "No tracks are available for this episode yet."
-                          : ""
-                    }
-                    onClick={() => {
-                      void exportToSpotify();
-                    }}
-                  >
-                    {spotifyExporting ? "Exporting..." : "Add to Spotify"}
-                  </button>
-                  <button
-                    type="button"
-                    className="control-pill control-pill--small"
-                    disabled={appleExporting || !state.tracks.length || !isAppleMusicConfigured()}
-                    title={
-                      !isAppleMusicConfigured()
-                        ? "Apple Music export requires a configured developer-token endpoint."
-                        : !state.tracks.length
-                          ? "No tracks are available for this episode yet."
-                          : ""
-                    }
-                    onClick={() => {
-                      void exportToAppleMusic();
-                    }}
-                  >
-                    {appleExporting ? "Exporting..." : "Add to Apple Music"}
-                  </button>
+                  <span className="section-heading__tooltip" title={spotifyDisabledReason}>
+                    <button
+                      type="button"
+                      className="control-pill control-pill--small"
+                      disabled={spotifyDisabled}
+                      onClick={() => {
+                        void exportToSpotify();
+                      }}
+                    >
+                      {spotifyExporting ? "Exporting..." : "Add to Spotify"}
+                    </button>
+                  </span>
+                  <span className="section-heading__tooltip" title={appleDisabledReason}>
+                    <button
+                      type="button"
+                      className="control-pill control-pill--small"
+                      disabled={appleDisabled}
+                      onClick={() => {
+                        void exportToAppleMusic();
+                      }}
+                    >
+                      {appleExporting ? "Exporting..." : "Add to Apple Music"}
+                    </button>
+                  </span>
                 </div>
               </div>
               {historyError && <p className="status-inline status-inline--error">{historyError}</p>}
