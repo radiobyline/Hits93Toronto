@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useScheduleSnapshot } from "../../hooks/useScheduleSnapshot";
+import type { Programme } from "../../services/scheduleProvider";
 import { formatClock } from "../../utils/time";
 
 function formatEndsIn(remainingMs: number): string {
@@ -27,8 +29,16 @@ function formatEndsIn(remainingMs: number): string {
   return `Ends in ${parts.join(" ")}`;
 }
 
-export function ProgrammeBlock(): JSX.Element {
+interface ProgrammeBlockProps {
+  onProgrammeChange?: (current: Programme | null, next: Programme | null) => void;
+}
+
+export function ProgrammeBlock({ onProgrammeChange }: ProgrammeBlockProps): JSX.Element {
   const { current, next, progressPercent, remainingMs, loading, error } = useScheduleSnapshot(60000);
+
+  useEffect(() => {
+    onProgrammeChange?.(current, next);
+  }, [onProgrammeChange, current?.id, current?.startMs, next?.id, next?.startMs]);
 
   return (
     <section className="programme-block">
@@ -92,38 +102,6 @@ export function ProgrammeBlock(): JSX.Element {
               </p>
             </article>
           </div>
-
-          <div className="mini-player-sentinel" aria-hidden="true" />
-
-          <section className="programme-block__cta-grid">
-            <article className="programme-block__cta">
-              <h3>Music Submissions</h3>
-              <p>
-                <Link to="/schedule/programmes/next-up">
-                  <em>Next Up</em>
-                </Link>{" "}
-                and{" "}
-                <Link to="/schedule/programmes/next-wave">
-                  <em>Next Wave</em>
-                </Link>{" "}
-                air daily and are intended to help smaller artists reach a broader audience.
-              </p>
-              <p>
-                <Link to="/contact">Submit through Contact Us</Link>.
-              </p>
-            </article>
-
-            <article className="programme-block__cta">
-              <h3>Support, Sponsorships & Partnerships</h3>
-              <p>Help keep Hits 93 Toronto growing through donations, sponsorships, and partnerships.</p>
-              <p>
-                <a href="https://paypal.me/Hits93Toronto" target="_blank" rel="noreferrer">
-                  Support on PayPal
-                </a>{" "}
-                or <Link to="/contact">contact us for sponsorship details</Link>.
-              </p>
-            </article>
-          </section>
         </>
       )}
     </section>

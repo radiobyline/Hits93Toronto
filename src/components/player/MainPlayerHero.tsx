@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { useTrackVote } from "../../hooks/useTrackVote";
+import type { Programme } from "../../services/scheduleProvider";
 import { RecentCarousel } from "../history/RecentCarousel";
 import { RequestModal } from "../requests/RequestModal";
 import { ProgrammeBlock } from "../schedule/ProgrammeBlock";
+import { StationCtaBlock } from "../schedule/StationCtaBlock";
 import { LiveIndicator } from "./LiveIndicator";
 import { MusicLinks } from "./MusicLinks";
 import { PlayerControls } from "./PlayerControls";
@@ -14,6 +16,60 @@ import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
 interface MainPlayerHeroProps {
   rootRef: React.RefObject<HTMLElement>;
   miniPlayerSentinelRef: React.RefObject<HTMLDivElement>;
+}
+
+function formatShowTitle(programmeName: string): string {
+  const trimmed = programmeName.trim();
+  if (!trimmed) {
+    return "The Show";
+  }
+
+  if (/^the\\b/i.test(trimmed)) {
+    return `${trimmed} Show`;
+  }
+
+  return `The ${trimmed} Show`;
+}
+
+function formatShowTagline(description: string): string {
+  const trimmed = description.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  let candidate = trimmed;
+
+  const emDashIndex = candidate.indexOf("—");
+  if (emDashIndex > 0) {
+    candidate = candidate.slice(0, emDashIndex);
+  } else {
+    const enDashIndex = candidate.indexOf("–");
+    if (enDashIndex > 0) {
+      candidate = candidate.slice(0, enDashIndex);
+    } else {
+      const colonIndex = candidate.indexOf(":");
+      if (colonIndex > 0) {
+        candidate = candidate.slice(0, colonIndex);
+      } else {
+        const periodIndex = candidate.indexOf(".");
+        if (periodIndex > 0) {
+          candidate = candidate.slice(0, periodIndex);
+        }
+      }
+    }
+  }
+
+  candidate = candidate.trim();
+  if (!candidate) {
+    return "";
+  }
+
+  const words = candidate.split(/\\s+/).filter(Boolean);
+  if (words.length > 10) {
+    return `${words.slice(0, 10).join(" ")}…`;
+  }
+
+  return candidate;
 }
 
 export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHeroProps): JSX.Element {
@@ -33,11 +89,32 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
   } = useAudioPlayer();
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const { canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const [programmeSnapshot, setProgrammeSnapshot] = useState<{ current: Programme | null; next: Programme | null }>({
+    current: null,
+    next: null
+  });
   const artworkSrc = currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL;
-  const voteSummary = currentVote
-    ? "Thanks for sharing your thoughts on this track!"
-    : voteNote;
+  const voteLocked = Boolean(currentTrack?.allMusicId) && !canVote;
+
+  const onProgrammeChange = useCallback((current: Programme | null, next: Programme | null) => {
+    setProgrammeSnapshot((previous) => {
+      if (
+        previous.current?.id === current?.id &&
+        previous.current?.startMs === current?.startMs &&
+        previous.next?.id === next?.id &&
+        previous.next?.startMs === next?.startMs
+      ) {
+        return previous;
+      }
+      return { current, next };
+    });
+  }, []);
+
+  const onAirProgramme = programmeSnapshot.current;
+  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
+  const onAirShowTagline = onAirProgramme ? formatShowTagline(onAirProgramme.description) : "";
+  const upNextProgramme = programmeSnapshot.next;
 
   return (
     <>
@@ -64,7 +141,39 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
 
           <div className="hero-player__meta">
             <p className="hero-player__overline">Streaming Worldwide From Toronto</p>
-            <LiveIndicator isActive={isPlaying} />
+            <div className="hero-player__status-row">
+              <LiveIndicator isActive={isPlaying}>
+                {onAirProgramme && (
+                  <>
+                    <span className="live-indicator__sep" aria-hidden="true">
+                      ·
+                    </span>
+                    <Link
+                      to={`/schedule/programmes/${onAirProgramme.slug}`}
+                      className="live-indicator__link"
+                      title={onAirProgramme.description}
+                      aria-label={`Open ${onAirProgramme.name} program page`}
+                    >
+                      {onAirShowTitle}
+                    </Link>
+                    {onAirShowTagline && (
+                      <>
+                        <span className="live-indicator__sep" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="live-indicator__tagline">{onAirShowTagline}</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </LiveIndicator>
+              {upNextProgramme && (
+                <span className="hero-player__programme-inline">
+                  Up next:{" "}
+                  <Link to={`/schedule/programmes/${upNextProgramme.slug}`}>{upNextProgramme.name}</Link>
+                </span>
+              )}
+            </div>
             <h2>{currentTrack?.title ?? "Live from Hits 93 Toronto"}</h2>
             <p className="hero-player__artist">{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
             {currentTrack?.album && <p className="hero-player__album">Album: {currentTrack.album}</p>}
@@ -76,30 +185,30 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                   <div className="hero-player__vote-inline-buttons">
                     <button
                       type="button"
-                      className="control-pill control-pill--small"
-                      disabled={!canVote}
+                      className={`control-pill control-pill--small ${voteLocked ? "control-pill--disabled" : ""}`}
                       onClick={() => {
                         castVote("up");
                       }}
                       aria-label="Like current track"
+                      aria-disabled={voteLocked}
                     >
                       <ThumbUpIcon />
                       <span>Like</span>
                     </button>
                     <button
                       type="button"
-                      className="control-pill control-pill--small"
-                      disabled={!canVote}
+                      className={`control-pill control-pill--small ${voteLocked ? "control-pill--disabled" : ""}`}
                       onClick={() => {
                         castVote("down");
                       }}
                       aria-label="Dislike current track"
+                      aria-disabled={voteLocked}
                     >
                       <ThumbDownIcon />
                       <span>Dislike</span>
                     </button>
                   </div>
-                  {(currentVote || voteNote) && <p className="status-inline">{voteSummary}</p>}
+                  {voteNote && <p className="status-inline">{voteNote}</p>}
                 </>
               ) : (
                 <p className="status-inline">Rating is unavailable for this track right now.</p>
@@ -158,7 +267,9 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
 
         <RecentCarousel tracks={recentTracks.slice(0, 5)} />
         <div ref={miniPlayerSentinelRef} className="mini-player-sentinel" aria-hidden="true" />
-        <ProgrammeBlock />
+        <ProgrammeBlock onProgrammeChange={onProgrammeChange} />
+        <div className="mini-player-sentinel" aria-hidden="true" />
+        <StationCtaBlock />
       </section>
 
       <RequestModal

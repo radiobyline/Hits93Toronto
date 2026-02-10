@@ -12,6 +12,8 @@ interface TrackVoteState {
 
 export function useTrackVote(track: Track | null): TrackVoteState {
   const [voteNote, setVoteNote] = useState("");
+  const [voteRevision, setVoteRevision] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const voteKey = useMemo(() => {
     if (!track) {
@@ -27,12 +29,13 @@ export function useTrackVote(track: Track | null): TrackVoteState {
     }
 
     return voteService.getVote(voteKey);
-  }, [voteKey, voteNote]);
+  }, [voteKey, voteRevision]);
 
-  const canVote = Boolean(track?.allMusicId) && !currentVote;
+  const canVote = Boolean(track?.allMusicId) && !currentVote && !isSubmitting;
 
   useEffect(() => {
     setVoteNote("");
+    setIsSubmitting(false);
   }, [voteKey]);
 
   const castVote = useCallback(
@@ -42,16 +45,43 @@ export function useTrackVote(track: Track | null): TrackVoteState {
         return;
       }
 
+      const existingVote = voteService.getVote(voteKey);
+      if (existingVote) {
+        setVoteNote("Thanks for sharing your thoughts on this track!");
+        return;
+      }
+
+      if (isSubmitting) {
+        return;
+      }
+
+      setIsSubmitting(true);
+      setVoteNote("");
+
       const submit =
         direction === "up"
           ? voteService.voteUp(voteKey, track.allMusicId)
           : voteService.voteDown(voteKey, track.allMusicId);
 
-      void submit.then((result) => {
-        setVoteNote(result.note);
-      });
+      void submit
+        .then((result) => {
+          setIsSubmitting(false);
+
+          if (result.accepted || voteService.getVote(voteKey)) {
+            // Recompute currentVote from session storage without showing a note.
+            setVoteRevision((previous) => previous + 1);
+            setVoteNote("");
+            return;
+          }
+
+          setVoteNote(result.note);
+        })
+        .catch((error) => {
+          setIsSubmitting(false);
+          setVoteNote(error instanceof Error ? error.message : "Vote failed.");
+        });
     },
-    [voteKey, track]
+    [voteKey, track, isSubmitting]
   );
 
   return {

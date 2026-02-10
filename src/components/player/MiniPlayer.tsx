@@ -12,11 +12,11 @@ export function MiniPlayer(): JSX.Element {
     setMuted,
     isBuffering
   } = useAudioPlayer();
-  const { currentVote, canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const { canVote, voteNote, castVote } = useTrackVote(currentTrack);
 
-  const voteSummary = currentVote
-    ? "Thanks for sharing your thoughts on this track!"
-    : voteNote;
+  const canRate = Boolean(currentTrack?.allMusicId);
+  const voteLocked = canRate && !canVote;
+  const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
@@ -52,26 +52,28 @@ export function MiniPlayer(): JSX.Element {
           {isMuted ? <MuteIcon /> : <VolumeIcon />}
         </button>
 
-        {canVote && (
+        {canRate && (
           <>
             <button
               type="button"
-              className="control-pill control-pill--small mini-player__vote-button"
+              className={`control-pill control-pill--small mini-player__vote-button ${voteLocked ? "control-pill--disabled" : ""}`}
               onClick={() => {
                 castVote("up");
               }}
               aria-label="Like current track"
+              aria-disabled={voteLocked}
             >
               <ThumbUpIcon />
               <span>Like</span>
             </button>
             <button
               type="button"
-              className="control-pill control-pill--small mini-player__vote-button"
+              className={`control-pill control-pill--small mini-player__vote-button ${voteLocked ? "control-pill--disabled" : ""}`}
               onClick={() => {
                 castVote("down");
               }}
               aria-label="Dislike current track"
+              aria-disabled={voteLocked}
             >
               <ThumbDownIcon />
               <span>Dislike</span>
@@ -81,12 +83,7 @@ export function MiniPlayer(): JSX.Element {
 
       </div>
 
-      {(currentVote || voteNote || isBuffering) && (
-        <p className="mini-player__note">
-          {voteSummary}
-          {isBuffering ? (voteSummary ? " • Buffering..." : "Buffering...") : ""}
-        </p>
-      )}
+      {Boolean(noteParts.length) && <p className="mini-player__note">{noteParts.join(" • ")}</p>}
     </aside>
   );
 }
