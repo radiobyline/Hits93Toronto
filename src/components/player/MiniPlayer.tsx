@@ -5,17 +5,14 @@ import { useTrackVote } from "../../hooks/useTrackVote";
 import { LiveIndicator } from "./LiveIndicator";
 import { MuteIcon, PauseIcon, PlayIcon, ThumbDownIcon, ThumbUpIcon, VolumeIcon } from "../ui/Icons";
 
-function formatShowTitle(programmeName: string): string {
+function formatShowTitleAllCaps(programmeName: string): string {
   const trimmed = programmeName.trim();
   if (!trimmed) {
-    return "The Show";
+    return "THE SHOW";
   }
 
-  if (/^the\\b/i.test(trimmed)) {
-    return `${trimmed} Show`;
-  }
-
-  return `The ${trimmed} Show`;
+  const withoutThe = trimmed.replace(/^the\\s+/i, "");
+  return `THE ${withoutThe} SHOW`.toUpperCase();
 }
 
 export function MiniPlayer(): JSX.Element {
@@ -33,14 +30,14 @@ export function MiniPlayer(): JSX.Element {
   const canRate = Boolean(currentTrack?.allMusicId);
   const voteLocked = canRate && !canVote;
   const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
-  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
+  const onAirShowTitleAllCaps = onAirProgramme ? formatShowTitleAllCaps(onAirProgramme.name) : "";
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
       <div className="mini-player__meta">
         <div className="mini-player__meta-top">
-          {onAirProgramme ? (
-            <LiveIndicator isActive={isPlaying} mode="content">
+          <LiveIndicator isActive={isPlaying}>
+            {onAirProgramme && (
               <>
                 <Link
                   to={`/schedule/programmes/${onAirProgramme.slug}`}
@@ -48,14 +45,17 @@ export function MiniPlayer(): JSX.Element {
                   title={onAirProgramme.description}
                   aria-label={`Open ${onAirProgramme.name} program page`}
                 >
-                  {onAirShowTitle}
+                  {onAirShowTitleAllCaps}
                 </Link>
-                <span className="live-indicator__tagline"> - ON HITS 93 TORONTO</span>
+                <span className="live-indicator__sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="live-indicator__tagline">
+                  ON <strong>HITS 93 TORONTO</strong>
+                </span>
               </>
-            </LiveIndicator>
-          ) : (
-            <LiveIndicator isActive={isPlaying} />
-          )}
+            )}
+          </LiveIndicator>
         </div>
         <strong>{currentTrack?.title ?? "Hits 93 Toronto"}</strong>
         <span>{currentTrack ? currentTrack.artist : "Live stream"}</span>
