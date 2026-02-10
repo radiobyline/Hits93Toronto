@@ -36,7 +36,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
     currentTrack,
     isPlaying,
     isMuted,
-    volume,
     isBuffering,
     isLoadingMetadata,
     metadataError,
@@ -44,7 +43,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
     recentTracks,
     togglePlayback,
     setMuted,
-    setVolume
   } = useAudioPlayer();
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -156,13 +154,11 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
               <PlayerControls
                 isPlaying={isPlaying}
                 isMuted={isMuted}
-                volume={volume}
                 isBuffering={isBuffering}
                 onTogglePlayback={togglePlayback}
                 onToggleMuted={() => {
                   setMuted(!isMuted);
                 }}
-                onVolumeChange={setVolume}
               />
               <div className="hero-player__vote-divider" />
               <MusicLinks track={currentTrack} />

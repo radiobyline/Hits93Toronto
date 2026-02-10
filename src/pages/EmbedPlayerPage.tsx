@@ -9,11 +9,9 @@ export function EmbedPlayerPage(): JSX.Element {
     currentTrack,
     isPlaying,
     isMuted,
-    volume,
     isBuffering,
     togglePlayback,
     setMuted,
-    setVolume,
     playbackError
   } = useAudioPlayer();
 
@@ -27,13 +25,11 @@ export function EmbedPlayerPage(): JSX.Element {
         <PlayerControls
           isPlaying={isPlaying}
           isMuted={isMuted}
-          volume={volume}
           isBuffering={isBuffering}
           onTogglePlayback={togglePlayback}
           onToggleMuted={() => {
             setMuted(!isMuted);
           }}
-          onVolumeChange={setVolume}
         />
 
         <Visualizer analyserNode={analyserNode} isPlaying={isPlaying} />
