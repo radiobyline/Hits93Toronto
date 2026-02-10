@@ -125,7 +125,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 }}
               />
               <div className="hero-player__vote-divider" />
-              <p>Rate</p>
               {currentTrack?.allMusicId ? (
                 <>
                   <div className="hero-player__vote-inline-buttons">
