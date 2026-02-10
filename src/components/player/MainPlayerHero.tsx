@@ -31,47 +31,6 @@ function formatShowTitle(programmeName: string): string {
   return `The ${trimmed} Show`;
 }
 
-function formatShowTagline(description: string): string {
-  const trimmed = description.trim();
-  if (!trimmed) {
-    return "";
-  }
-
-  let candidate = trimmed;
-
-  const emDashIndex = candidate.indexOf("—");
-  if (emDashIndex > 0) {
-    candidate = candidate.slice(0, emDashIndex);
-  } else {
-    const enDashIndex = candidate.indexOf("–");
-    if (enDashIndex > 0) {
-      candidate = candidate.slice(0, enDashIndex);
-    } else {
-      const colonIndex = candidate.indexOf(":");
-      if (colonIndex > 0) {
-        candidate = candidate.slice(0, colonIndex);
-      } else {
-        const periodIndex = candidate.indexOf(".");
-        if (periodIndex > 0) {
-          candidate = candidate.slice(0, periodIndex);
-        }
-      }
-    }
-  }
-
-  candidate = candidate.trim();
-  if (!candidate) {
-    return "";
-  }
-
-  const words = candidate.split(/\\s+/).filter(Boolean);
-  if (words.length > 10) {
-    return `${words.slice(0, 10).join(" ")}…`;
-  }
-
-  return candidate;
-}
-
 export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHeroProps): JSX.Element {
   const {
     currentTrack,
@@ -113,8 +72,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
 
   const onAirProgramme = programmeSnapshot.current;
   const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
-  const onAirShowTagline = onAirProgramme ? formatShowTagline(onAirProgramme.description) : "";
-  const upNextProgramme = programmeSnapshot.next;
 
   return (
     <>
@@ -144,35 +101,16 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
             <div className="hero-player__status-row">
               <LiveIndicator isActive={isPlaying}>
                 {onAirProgramme && (
-                  <>
-                    <span className="live-indicator__sep" aria-hidden="true">
-                      ·
-                    </span>
-                    <Link
-                      to={`/schedule/programmes/${onAirProgramme.slug}`}
-                      className="live-indicator__link"
-                      title={onAirProgramme.description}
-                      aria-label={`Open ${onAirProgramme.name} program page`}
-                    >
-                      {onAirShowTitle}
-                    </Link>
-                    {onAirShowTagline && (
-                      <>
-                        <span className="live-indicator__sep" aria-hidden="true">
-                          ·
-                        </span>
-                        <span className="live-indicator__tagline">{onAirShowTagline}</span>
-                      </>
-                    )}
-                  </>
+                  <Link
+                    to={`/schedule/programmes/${onAirProgramme.slug}`}
+                    className="live-indicator__link"
+                    title={onAirProgramme.description}
+                    aria-label={`Open ${onAirProgramme.name} program page`}
+                  >
+                    {onAirShowTitle}
+                  </Link>
                 )}
               </LiveIndicator>
-              {upNextProgramme && (
-                <span className="hero-player__programme-inline">
-                  Up next:{" "}
-                  <Link to={`/schedule/programmes/${upNextProgramme.slug}`}>{upNextProgramme.name}</Link>
-                </span>
-              )}
             </div>
             <h2>{currentTrack?.title ?? "Live from Hits 93 Toronto"}</h2>
             <p className="hero-player__artist">{currentTrack?.artist ?? "Press play and stay with the live stream."}</p>
