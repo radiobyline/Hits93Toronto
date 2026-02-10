@@ -115,6 +115,16 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
             {currentTrack?.album && <p className="hero-player__album">Album: {currentTrack.album}</p>}
 
             <div className="hero-player__vote-inline">
+              <PlayerControls
+                isPlaying={isPlaying}
+                isMuted={isMuted}
+                isBuffering={isBuffering}
+                onTogglePlayback={togglePlayback}
+                onToggleMuted={() => {
+                  setMuted(!isMuted);
+                }}
+              />
+              <div className="hero-player__vote-divider" />
               <p>Rate</p>
               {currentTrack?.allMusicId ? (
                 <>
@@ -150,16 +160,6 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                 <p className="status-inline">Rating is unavailable for this track right now.</p>
               )}
 
-              <div className="hero-player__vote-divider" />
-              <PlayerControls
-                isPlaying={isPlaying}
-                isMuted={isMuted}
-                isBuffering={isBuffering}
-                onTogglePlayback={togglePlayback}
-                onToggleMuted={() => {
-                  setMuted(!isMuted);
-                }}
-              />
               <div className="hero-player__vote-divider" />
               <MusicLinks track={currentTrack} />
             </div>
