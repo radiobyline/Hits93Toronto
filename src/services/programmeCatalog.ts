@@ -90,6 +90,19 @@ const PROGRAMME_CATALOG: Record<string, ProgrammeCatalogEntry> = {
   }
 };
 
+const PROGRAMME_TAGLINES_THREE_WORDS: Record<string, string> = {
+  bassline: "Late-night bass session",
+  "after-hours": "Smooth overnight blend",
+  "prime-hits": "High-impact pop favourites",
+  "first-light": "Bright breakfast momentum",
+  "the-a-list": "Afternoon hit list",
+  "the-drive": "Commute soundtrack big-choruses",
+  "next-up": "Emerging artist spotlight",
+  "next-wave": "Forward-leaning pop discoveries",
+  "low-key": "Calm late-evening unwind",
+  "good-energy": "Feel-good pop finale"
+};
+
 export function getProgrammeCatalogEntry(slug: string): ProgrammeCatalogEntry | null {
   return PROGRAMME_CATALOG[slug] ?? null;
 }
@@ -120,4 +133,11 @@ export function getProgrammeLongDescriptionBySlug(slug: string, fallback = "Hits
 export function getProgrammeNameBySlug(slug: string, fallback = "Programme"): string {
   const entry = getProgrammeCatalogEntry(slug);
   return entry?.name ?? fallback;
+}
+
+export function getProgrammeTaglineThreeWordsBySlug(
+  slug: string,
+  fallback = "Music program block"
+): string {
+  return PROGRAMME_TAGLINES_THREE_WORDS[slug] ?? fallback;
 }

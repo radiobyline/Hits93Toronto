@@ -1,7 +1,23 @@
+import { Link } from "react-router-dom";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
+import { useScheduleSnapshot } from "../../hooks/useScheduleSnapshot";
 import { useTrackVote } from "../../hooks/useTrackVote";
+import { getProgrammeTaglineThreeWordsBySlug } from "../../services/programmeCatalog";
 import { LiveIndicator } from "./LiveIndicator";
 import { MuteIcon, PauseIcon, PlayIcon, ThumbDownIcon, ThumbUpIcon, VolumeIcon } from "../ui/Icons";
+
+function formatShowTitle(programmeName: string): string {
+  const trimmed = programmeName.trim();
+  if (!trimmed) {
+    return "The Show";
+  }
+
+  if (/^the\\b/i.test(trimmed)) {
+    return `${trimmed} Show`;
+  }
+
+  return `The ${trimmed} Show`;
+}
 
 export function MiniPlayer(): JSX.Element {
   const {
@@ -12,18 +28,43 @@ export function MiniPlayer(): JSX.Element {
     setMuted,
     isBuffering
   } = useAudioPlayer();
+  const { current: onAirProgramme } = useScheduleSnapshot(60000);
   const { canVote, voteNote, castVote } = useTrackVote(currentTrack);
 
   const canRate = Boolean(currentTrack?.allMusicId);
   const voteLocked = canRate && !canVote;
   const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
+  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
+  const onAirTagline = onAirProgramme ? getProgrammeTaglineThreeWordsBySlug(onAirProgramme.slug) : "";
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
       <div className="mini-player__meta">
         <div className="mini-player__meta-top">
-          <LiveIndicator isActive={isPlaying} />
-          <span className="mini-player__station">Hits 93 Toronto</span>
+          <LiveIndicator isActive={isPlaying}>
+            {onAirProgramme && (
+              <>
+                <Link
+                  to={`/schedule/programmes/${onAirProgramme.slug}`}
+                  className="live-indicator__link"
+                  title={onAirProgramme.description}
+                  aria-label={`Open ${onAirProgramme.name} program page`}
+                >
+                  {onAirShowTitle}
+                </Link>
+                <span className="live-indicator__sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="live-indicator__tagline">{onAirTagline}</span>
+                <span className="live-indicator__sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="live-indicator__tagline">
+                  ONLY ON <strong>HITS 93 TORONTO</strong>
+                </span>
+              </>
+            )}
+          </LiveIndicator>
         </div>
         <strong>{currentTrack?.title ?? "Hits 93 Toronto"}</strong>
         <span>{currentTrack ? currentTrack.artist : "Live stream"}</span>
