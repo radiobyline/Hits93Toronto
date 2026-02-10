@@ -5,14 +5,17 @@ import { useTrackVote } from "../../hooks/useTrackVote";
 import { LiveIndicator } from "./LiveIndicator";
 import { MuteIcon, PauseIcon, PlayIcon, ThumbDownIcon, ThumbUpIcon, VolumeIcon } from "../ui/Icons";
 
-function formatShowTitleAllCaps(programmeName: string): string {
+function formatShowTitle(programmeName: string): string {
   const trimmed = programmeName.trim();
   if (!trimmed) {
-    return "THE SHOW";
+    return "The Show";
   }
 
-  const withoutThe = trimmed.replace(/^the\\s+/i, "");
-  return `THE ${withoutThe} SHOW`.toUpperCase();
+  if (/^the\\b/i.test(trimmed)) {
+    return `${trimmed} Show`;
+  }
+
+  return `The ${trimmed} Show`;
 }
 
 export function MiniPlayer(): JSX.Element {
@@ -30,7 +33,7 @@ export function MiniPlayer(): JSX.Element {
   const canRate = Boolean(currentTrack?.allMusicId);
   const voteLocked = canRate && !canVote;
   const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
-  const onAirShowTitleAllCaps = onAirProgramme ? formatShowTitleAllCaps(onAirProgramme.name) : "";
+  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
@@ -45,14 +48,8 @@ export function MiniPlayer(): JSX.Element {
                   title={onAirProgramme.description}
                   aria-label={`Open ${onAirProgramme.name} program page`}
                 >
-                  {onAirShowTitleAllCaps}
+                  {onAirShowTitle}
                 </Link>
-                <span className="live-indicator__sep" aria-hidden="true">
-                  ·
-                </span>
-                <span className="live-indicator__tagline">
-                  ON <strong>HITS 93 TORONTO</strong>
-                </span>
               </>
             )}
           </LiveIndicator>
