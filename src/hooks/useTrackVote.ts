@@ -47,7 +47,7 @@ export function useTrackVote(track: Track | null): TrackVoteState {
 
       const existingVote = voteService.getVote(voteKey);
       if (existingVote) {
-        setVoteNote("Thanks for sharing your thoughts on this track!");
+        setVoteNote("You have already voted. Thanks for sharing your thoughts on this track!");
         return;
       }
 
