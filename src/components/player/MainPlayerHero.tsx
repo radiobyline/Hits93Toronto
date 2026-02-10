@@ -97,7 +97,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
           </div>
 
           <div className="hero-player__meta">
-            <p className="hero-player__overline">Streaming Worldwide From Toronto</p>
+            <p className="hero-player__overline">HITS 93 TORONTO WORLDWIDE LIVE STREAM</p>
             <div className="hero-player__status-row">
               <LiveIndicator isActive={isPlaying}>
                 {onAirProgramme && (

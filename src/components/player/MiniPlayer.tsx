@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { useScheduleSnapshot } from "../../hooks/useScheduleSnapshot";
 import { useTrackVote } from "../../hooks/useTrackVote";
-import { getProgrammeTaglineThreeWordsBySlug } from "../../services/programmeCatalog";
 import { LiveIndicator } from "./LiveIndicator";
 import { MuteIcon, PauseIcon, PlayIcon, ThumbDownIcon, ThumbUpIcon, VolumeIcon } from "../ui/Icons";
 
@@ -35,14 +34,13 @@ export function MiniPlayer(): JSX.Element {
   const voteLocked = canRate && !canVote;
   const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
   const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
-  const onAirTagline = onAirProgramme ? getProgrammeTaglineThreeWordsBySlug(onAirProgramme.slug) : "";
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
       <div className="mini-player__meta">
         <div className="mini-player__meta-top">
-          <LiveIndicator isActive={isPlaying}>
-            {onAirProgramme && (
+          {onAirProgramme ? (
+            <LiveIndicator isActive={isPlaying} mode="content">
               <>
                 <Link
                   to={`/schedule/programmes/${onAirProgramme.slug}`}
@@ -52,19 +50,12 @@ export function MiniPlayer(): JSX.Element {
                 >
                   {onAirShowTitle}
                 </Link>
-                <span className="live-indicator__sep" aria-hidden="true">
-                  ·
-                </span>
-                <span className="live-indicator__tagline">{onAirTagline}</span>
-                <span className="live-indicator__sep" aria-hidden="true">
-                  ·
-                </span>
-                <span className="live-indicator__tagline">
-                  ONLY ON <strong>HITS 93 TORONTO</strong>
-                </span>
+                <span className="live-indicator__tagline"> - ON HITS 93 TORONTO</span>
               </>
-            )}
-          </LiveIndicator>
+            </LiveIndicator>
+          ) : (
+            <LiveIndicator isActive={isPlaying} />
+          )}
         </div>
         <strong>{currentTrack?.title ?? "Hits 93 Toronto"}</strong>
         <span>{currentTrack ? currentTrack.artist : "Live stream"}</span>

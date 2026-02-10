@@ -35,6 +35,44 @@ function formatProgrammeDate(ms: number): string {
   });
 }
 
+function formatEndsIn(remainingMs: number): string {
+  if (remainingMs <= 0) {
+    return "Ends now";
+  }
+
+  const totalMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  }
+
+  if (minutes > 0) {
+    parts.push(`${minutes} ${minutes === 1 ? "min" : "mins"}`);
+  }
+
+  if (!parts.length) {
+    parts.push("1 min");
+  }
+
+  return `Ends in ${parts.join(" ")}`;
+}
+
+function computeProgress(startMs: number, endMs: number, nowMs: number): { progressPercent: number; remainingMs: number } {
+  const duration = endMs - startMs;
+  if (duration <= 0) {
+    return { progressPercent: 0, remainingMs: 0 };
+  }
+
+  const elapsed = Math.max(0, Math.min(duration, nowMs - startMs));
+  const remainingMs = Math.max(0, endMs - nowMs);
+  const progressPercent = (elapsed / duration) * 100;
+
+  return { progressPercent, remainingMs };
+}
+
 export function ProgrammePage(): JSX.Element {
   const params = useParams<{ slug?: string }>();
   const slug = useMemo(() => resolveProgrammeSlug(params.slug ?? ""), [params.slug]);
@@ -42,6 +80,7 @@ export function ProgrammePage(): JSX.Element {
   const [episodes, setEpisodes] = useState<Programme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, forceTick] = useState(0);
 
   useEffect(() => {
     if (!slug) {
@@ -93,6 +132,25 @@ export function ProgrammePage(): JSX.Element {
     slug,
     "Program details are currently unavailable."
   );
+  const nowMs = Date.now();
+  const hasOnAirEpisode = useMemo(
+    () => episodes.some((episode) => nowMs >= episode.startMs && nowMs < episode.endMs),
+    [episodes, nowMs]
+  );
+
+  useEffect(() => {
+    if (!hasOnAirEpisode) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      forceTick((tick) => tick + 1);
+    }, 30000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [hasOnAirEpisode]);
 
   return (
     <div className="container">
@@ -135,7 +193,10 @@ export function ProgrammePage(): JSX.Element {
             <div className="programme-episode-list">
               {episodes.map((episode) => {
                 const dateIso = formatIsoDateLocal(new Date(episode.startMs));
-                const isCurrent = Date.now() >= episode.startMs && Date.now() < episode.endMs;
+                const isCurrent = nowMs >= episode.startMs && nowMs < episode.endMs;
+                const progress = isCurrent
+                  ? computeProgress(episode.startMs, episode.endMs, nowMs)
+                  : { progressPercent: 0, remainingMs: 0 };
                 return (
                   <article
                     className={`programme-episode-list__item ${
@@ -149,6 +210,21 @@ export function ProgrammePage(): JSX.Element {
                       <p>
                         {formatClock(episode.startMs)} to {formatClock(episode.endMs)}
                       </p>
+                      {isCurrent && (
+                        <>
+                          <div
+                            className="programme-progress schedule-list__progress"
+                            role="progressbar"
+                            aria-label="Current program progress"
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={progress.progressPercent}
+                          >
+                            <span style={{ width: `${progress.progressPercent.toFixed(2)}%` }} />
+                          </div>
+                          <p className="schedule-list__remaining">{formatEndsIn(progress.remainingMs)}</p>
+                        </>
+                      )}
                     </div>
                     <Link
                       to={`/schedule/programme/${dateIso}/${episode.startMs}/${episode.slug}`}

@@ -2222,6 +2222,11 @@ h4 {
     padding-bottom: 0.18rem;
   }
 
+  .schedule-controls .control-pill:hover:not(:disabled):not(.control-pill--disabled),
+  .schedule-controls .control-pill:focus-visible:not(:disabled):not(.control-pill--disabled) {
+    transform: none;
+  }
+
   .schedule-controls .control-pill,
   .schedule-controls__date input {
     white-space: nowrap;
@@ -2328,7 +2333,6 @@ h4 {
     padding-inline: 0.52rem;
   }
 
-  .mini-player__vote-button,
   .mini-player__note {
     display: none;
   }
