@@ -2091,7 +2091,8 @@ h4 {
   }
 }
 
-@media (min-width: 1141px) {
+/* Only show extra hero shortcuts when there's enough room to avoid stacked buttons. */
+@media (min-width: 1360px) {
   .hero-player__utility-desktop-only {
     display: inline-flex;
   }
