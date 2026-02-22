@@ -12,23 +12,11 @@ import { LiveIndicator } from "./LiveIndicator";
 import { MusicLinks } from "./MusicLinks";
 import { PlayerControls } from "./PlayerControls";
 import { RequestIcon, ThumbDownIcon, ThumbUpIcon } from "../ui/Icons";
+import { formatProgrammeShowTitle } from "../../utils/programme";
 
 interface MainPlayerHeroProps {
   rootRef: React.RefObject<HTMLElement>;
   miniPlayerSentinelRef: React.RefObject<HTMLDivElement>;
-}
-
-function formatShowTitle(programmeName: string): string {
-  const trimmed = programmeName.trim();
-  if (!trimmed) {
-    return "The Show";
-  }
-
-  if (/^the\\b/i.test(trimmed)) {
-    return `${trimmed} Show`;
-  }
-
-  return `The ${trimmed} Show`;
 }
 
 export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHeroProps): JSX.Element {
@@ -46,13 +34,12 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
   } = useAudioPlayer();
 
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const { canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const { currentVote, voteNote, castVote, isSubmitting: voteSubmitting } = useTrackVote(currentTrack);
   const [programmeSnapshot, setProgrammeSnapshot] = useState<{ current: Programme | null; next: Programme | null }>({
     current: null,
     next: null
   });
   const artworkSrc = currentTrack?.artworkUrl ?? DEFAULT_ARTWORK_URL;
-  const voteLocked = Boolean(currentTrack?.allMusicId) && !canVote;
 
   const onProgrammeChange = useCallback((current: Programme | null, next: Programme | null) => {
     setProgrammeSnapshot((previous) => {
@@ -69,7 +56,7 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
   }, []);
 
   const onAirProgramme = programmeSnapshot.current;
-  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
+  const onAirShowTitle = onAirProgramme ? formatProgrammeShowTitle(onAirProgramme.name) : "";
 
   return (
     <>
@@ -130,24 +117,32 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
                   <div className="hero-player__vote-inline-buttons">
                     <button
                       type="button"
-                      className={`control-pill control-pill--small ${voteLocked ? "control-pill--disabled" : ""}`}
+                      className={`control-pill control-pill--small ${
+                        voteSubmitting ? "control-pill--disabled" : ""
+                      } ${currentVote === "up" ? "control-pill--vote-active control-pill--vote-up-active" : ""}`}
                       onClick={() => {
                         castVote("up");
                       }}
                       aria-label="Like current track"
-                      aria-disabled={voteLocked}
+                      aria-disabled={voteSubmitting}
+                      aria-pressed={currentVote === "up"}
+                      disabled={voteSubmitting}
                     >
                       <ThumbUpIcon />
                       <span>Like</span>
                     </button>
                     <button
                       type="button"
-                      className={`control-pill control-pill--small ${voteLocked ? "control-pill--disabled" : ""}`}
+                      className={`control-pill control-pill--small ${
+                        voteSubmitting ? "control-pill--disabled" : ""
+                      } ${currentVote === "down" ? "control-pill--vote-active control-pill--vote-down-active" : ""}`}
                       onClick={() => {
                         castVote("down");
                       }}
                       aria-label="Dislike current track"
-                      aria-disabled={voteLocked}
+                      aria-disabled={voteSubmitting}
+                      aria-pressed={currentVote === "down"}
+                      disabled={voteSubmitting}
                     >
                       <ThumbDownIcon />
                       <span>Dislike</span>

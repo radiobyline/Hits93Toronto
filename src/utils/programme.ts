@@ -40,6 +40,19 @@ export function getProgrammeArtworkUrl(programmeName: string): string {
   return mappedPath ? resolvePublicAssetUrl(mappedPath) : DEFAULT_ARTWORK_URL;
 }
 
+export function formatProgrammeShowTitle(programmeName: string): string {
+  const trimmed = programmeName.trim();
+  if (!trimmed) {
+    return "The Show";
+  }
+
+  if (trimmed.startsWith("The ")) {
+    return `${trimmed} Show`;
+  }
+
+  return `The ${trimmed} Show`;
+}
+
 export function formatIsoDateLocal(date: Date): string {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");

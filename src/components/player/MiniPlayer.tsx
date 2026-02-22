@@ -2,21 +2,9 @@ import { Link } from "react-router-dom";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { useScheduleSnapshot } from "../../hooks/useScheduleSnapshot";
 import { useTrackVote } from "../../hooks/useTrackVote";
+import { formatProgrammeShowTitle } from "../../utils/programme";
 import { LiveIndicator } from "./LiveIndicator";
 import { MuteIcon, PauseIcon, PlayIcon, ThumbDownIcon, ThumbUpIcon, VolumeIcon } from "../ui/Icons";
-
-function formatShowTitle(programmeName: string): string {
-  const trimmed = programmeName.trim();
-  if (!trimmed) {
-    return "The Show";
-  }
-
-  if (/^the\\b/i.test(trimmed)) {
-    return `${trimmed} Show`;
-  }
-
-  return `The ${trimmed} Show`;
-}
 
 export function MiniPlayer(): JSX.Element {
   const {
@@ -28,12 +16,11 @@ export function MiniPlayer(): JSX.Element {
     isBuffering
   } = useAudioPlayer();
   const { current: onAirProgramme } = useScheduleSnapshot(60000);
-  const { canVote, voteNote, castVote } = useTrackVote(currentTrack);
+  const { currentVote, voteNote, castVote, isSubmitting: voteSubmitting } = useTrackVote(currentTrack);
 
   const canRate = Boolean(currentTrack?.allMusicId);
-  const voteLocked = canRate && !canVote;
   const noteParts = [voteNote, isBuffering ? "Buffering..." : ""].filter(Boolean);
-  const onAirShowTitle = onAirProgramme ? formatShowTitle(onAirProgramme.name) : "";
+  const onAirShowTitle = onAirProgramme ? formatProgrammeShowTitle(onAirProgramme.name) : "";
 
   return (
     <aside className="mini-player" aria-label="Sticky mini player">
@@ -85,24 +72,32 @@ export function MiniPlayer(): JSX.Element {
           <>
             <button
               type="button"
-              className={`control-pill control-pill--small mini-player__vote-button ${voteLocked ? "control-pill--disabled" : ""}`}
+              className={`control-pill control-pill--small mini-player__vote-button ${
+                voteSubmitting ? "control-pill--disabled" : ""
+              } ${currentVote === "up" ? "control-pill--vote-active control-pill--vote-up-active" : ""}`}
               onClick={() => {
                 castVote("up");
               }}
               aria-label="Like current track"
-              aria-disabled={voteLocked}
+              aria-disabled={voteSubmitting}
+              aria-pressed={currentVote === "up"}
+              disabled={voteSubmitting}
             >
               <ThumbUpIcon />
               <span>Like</span>
             </button>
             <button
               type="button"
-              className={`control-pill control-pill--small mini-player__vote-button ${voteLocked ? "control-pill--disabled" : ""}`}
+              className={`control-pill control-pill--small mini-player__vote-button ${
+                voteSubmitting ? "control-pill--disabled" : ""
+              } ${currentVote === "down" ? "control-pill--vote-active control-pill--vote-down-active" : ""}`}
               onClick={() => {
                 castVote("down");
               }}
               aria-label="Dislike current track"
-              aria-disabled={voteLocked}
+              aria-disabled={voteSubmitting}
+              aria-pressed={currentVote === "down"}
+              disabled={voteSubmitting}
             >
               <ThumbDownIcon />
               <span>Dislike</span>

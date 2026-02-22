@@ -4,6 +4,7 @@ import { PlayIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
+import { handleTrackAddToAction } from "../services/trackListActions";
 import { fetchHistory } from "../services/historyService";
 import type { Track } from "../types";
 import { formatClock } from "../utils/time";
@@ -200,28 +201,40 @@ export function RecentPage(): JSX.Element {
 
             return (
               <article className="recent-list__item" key={`${row.track.key}-${row.track.startMs}`}>
-                <button
-                  type="button"
-                  className="control-pill control-pill--small recent-list__preview"
-                  disabled={previewLoadingKey === `${row.track.key}-${row.track.startMs}`}
-                  onClick={() => {
-                    const trackKey = getPreviewKey(row.track);
-                    if (previewingKey === trackKey) {
-                      stopPreview();
-                      return;
-                    }
-                    void startPreview(row.track);
-                  }}
-                >
-                  <PlayIcon />
-                  <span>
-                    {previewingKey === `${row.track.key}-${row.track.startMs}`
-                      ? "Stop"
-                      : previewLoadingKey === `${row.track.key}-${row.track.startMs}`
-                        ? "Loading..."
-                        : "Preview"}
-                  </span>
-                </button>
+                <div className="recent-list__actions">
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small recent-list__preview"
+                    disabled={previewLoadingKey === `${row.track.key}-${row.track.startMs}`}
+                    onClick={() => {
+                      const trackKey = getPreviewKey(row.track);
+                      if (previewingKey === trackKey) {
+                        stopPreview();
+                        return;
+                      }
+                      void startPreview(row.track);
+                    }}
+                  >
+                    <PlayIcon />
+                    <span>
+                      {previewingKey === `${row.track.key}-${row.track.startMs}`
+                        ? "Stop"
+                        : previewLoadingKey === `${row.track.key}-${row.track.startMs}`
+                          ? "Loading..."
+                          : "Preview"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="control-pill control-pill--small recent-list__add-to"
+                    onClick={() => {
+                      handleTrackAddToAction(row.track, "recent-page");
+                    }}
+                    title="Add to playlist/library options coming soon."
+                  >
+                    Add To...
+                  </button>
+                </div>
                 <img
                   src={row.track.artworkUrl}
                   alt={`${row.track.title} artwork`}

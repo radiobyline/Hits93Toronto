@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { voteService } from "../services/voteService";
 import type { Track, VoteDirection } from "../types";
 
@@ -6,6 +6,7 @@ interface TrackVoteState {
   voteKey: string;
   currentVote: VoteDirection | null;
   canVote: boolean;
+  isSubmitting: boolean;
   voteNote: string;
   castVote: (direction: VoteDirection) => void;
 }
@@ -14,6 +15,7 @@ export function useTrackVote(track: Track | null): TrackVoteState {
   const [voteNote, setVoteNote] = useState("");
   const [voteRevision, setVoteRevision] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const noteTimeoutRef = useRef<number | undefined>();
 
   const voteKey = useMemo(() => {
     if (!track) {
@@ -33,21 +35,50 @@ export function useTrackVote(track: Track | null): TrackVoteState {
 
   const canVote = Boolean(track?.allMusicId) && !currentVote && !isSubmitting;
 
+  const showVoteNote = useCallback((message: string) => {
+    if (noteTimeoutRef.current) {
+      window.clearTimeout(noteTimeoutRef.current);
+      noteTimeoutRef.current = undefined;
+    }
+
+    setVoteNote(message);
+    if (!message) {
+      return;
+    }
+
+    noteTimeoutRef.current = window.setTimeout(() => {
+      setVoteNote("");
+      noteTimeoutRef.current = undefined;
+    }, 5000);
+  }, []);
+
   useEffect(() => {
+    if (noteTimeoutRef.current) {
+      window.clearTimeout(noteTimeoutRef.current);
+      noteTimeoutRef.current = undefined;
+    }
     setVoteNote("");
     setIsSubmitting(false);
   }, [voteKey]);
 
+  useEffect(() => {
+    return () => {
+      if (noteTimeoutRef.current) {
+        window.clearTimeout(noteTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const castVote = useCallback(
     (direction: VoteDirection) => {
       if (!voteKey || !track?.allMusicId) {
-        setVoteNote("Track id unavailable for voting.");
+        showVoteNote("Track id unavailable for voting.");
         return;
       }
 
       const existingVote = voteService.getVote(voteKey);
       if (existingVote) {
-        setVoteNote("You have already voted. Thanks for sharing your thoughts on this track!");
+        showVoteNote("You have already voted. Thanks for sharing your thoughts on this track.");
         return;
       }
 
@@ -56,7 +87,7 @@ export function useTrackVote(track: Track | null): TrackVoteState {
       }
 
       setIsSubmitting(true);
-      setVoteNote("");
+      showVoteNote("");
 
       const submit =
         direction === "up"
@@ -70,24 +101,25 @@ export function useTrackVote(track: Track | null): TrackVoteState {
           if (result.accepted || voteService.getVote(voteKey)) {
             // Recompute currentVote from session storage without showing a note.
             setVoteRevision((previous) => previous + 1);
-            setVoteNote("");
+            showVoteNote("");
             return;
           }
 
-          setVoteNote(result.note);
+          showVoteNote(result.note);
         })
         .catch((error) => {
           setIsSubmitting(false);
-          setVoteNote(error instanceof Error ? error.message : "Vote failed.");
+          showVoteNote(error instanceof Error ? error.message : "Vote failed.");
         });
     },
-    [voteKey, track, isSubmitting]
+    [voteKey, track, isSubmitting, showVoteNote]
   );
 
   return {
     voteKey,
     currentVote,
     canVote,
+    isSubmitting,
     voteNote,
     castVote
   };

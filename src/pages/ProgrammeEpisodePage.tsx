@@ -11,6 +11,7 @@ import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
+import { handleTrackAddToAction } from "../services/trackListActions";
 import { exportEpisodePlaylistToAppleMusic, isAppleMusicConfigured } from "../services/appleMusicService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
@@ -667,27 +668,39 @@ export function ProgrammeEpisodePage(): JSX.Element {
                   const trackKey = getPreviewKey(track);
                   return (
                     <article className="recent-list__item" key={`${track.key}-${track.startMs}`}>
-                      <button
-                        type="button"
-                        className="control-pill control-pill--small recent-list__preview"
-                        disabled={previewLoadingKey === trackKey}
-                        onClick={() => {
-                          if (previewingKey === trackKey) {
-                            stopPreview();
-                            return;
-                          }
-                          void startPreview(track);
-                        }}
-                      >
-                        <PlayIcon />
-                        <span>
-                          {previewingKey === trackKey
-                            ? "Stop"
-                            : previewLoadingKey === trackKey
-                              ? "Loading..."
-                              : "Preview"}
-                        </span>
-                      </button>
+                      <div className="recent-list__actions">
+                        <button
+                          type="button"
+                          className="control-pill control-pill--small recent-list__preview"
+                          disabled={previewLoadingKey === trackKey}
+                          onClick={() => {
+                            if (previewingKey === trackKey) {
+                              stopPreview();
+                              return;
+                            }
+                            void startPreview(track);
+                          }}
+                        >
+                          <PlayIcon />
+                          <span>
+                            {previewingKey === trackKey
+                              ? "Stop"
+                              : previewLoadingKey === trackKey
+                                ? "Loading..."
+                                : "Preview"}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="control-pill control-pill--small recent-list__add-to"
+                          onClick={() => {
+                            handleTrackAddToAction(track, "programme-episode");
+                          }}
+                          title="Add to playlist/library options coming soon."
+                        >
+                          Add To...
+                        </button>
+                      </div>
                       <img
                         src={track.artworkUrl}
                         alt={`${track.title} artwork`}

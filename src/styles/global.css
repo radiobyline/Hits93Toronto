@@ -697,6 +697,25 @@ h4 {
   outline-offset: 2px;
 }
 
+.control-pill--vote-active {
+  border-color: transparent;
+  color: #fff;
+}
+
+.control-pill--vote-up-active {
+  background:
+    linear-gradient(120deg, rgba(30, 215, 96, 0.9), rgba(43, 196, 129, 0.84)) padding-box,
+    linear-gradient(120deg, rgba(30, 215, 96, 0.95), rgba(43, 196, 129, 0.9)) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.control-pill--vote-down-active {
+  background:
+    linear-gradient(120deg, rgba(255, 90, 103, 0.92), rgba(255, 115, 95, 0.84)) padding-box,
+    linear-gradient(120deg, rgba(255, 90, 103, 0.96), rgba(255, 115, 95, 0.9)) border-box;
+  background-clip: padding-box, border-box;
+}
+
 .control-pill--play {
   border: 1px solid transparent;
   background:
@@ -979,6 +998,15 @@ h4 {
   gap: 0.22rem;
 }
 
+.recent-card__actions {
+  margin-top: 0.38rem;
+  display: flex;
+}
+
+.recent-card__add-to {
+  width: 100%;
+}
+
 .recent-card__meta h3,
 .recent-card__meta p {
   margin: 0;
@@ -1236,6 +1264,20 @@ h4 {
   min-height: 36px;
   align-self: center;
   padding-inline: 0.7rem;
+}
+
+.recent-list__actions {
+  display: grid;
+  align-content: center;
+  gap: 0.42rem;
+}
+
+.recent-list__actions .control-pill {
+  justify-content: center;
+}
+
+.recent-list__add-to {
+  min-height: 34px;
 }
 
 .recent-list__item h3,
@@ -2008,6 +2050,25 @@ h4 {
     linear-gradient(120deg, var(--accent), var(--accent-alt)) border-box;
   background-clip: padding-box, border-box;
   color: #fff;
+}
+
+.mini-player .control-pill--vote-active {
+  color: #fff;
+  border-color: transparent;
+}
+
+.mini-player .control-pill--vote-up-active {
+  background:
+    linear-gradient(120deg, rgba(30, 215, 96, 0.92), rgba(43, 196, 129, 0.86)) padding-box,
+    linear-gradient(120deg, rgba(30, 215, 96, 0.96), rgba(43, 196, 129, 0.9)) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.mini-player .control-pill--vote-down-active {
+  background:
+    linear-gradient(120deg, rgba(255, 90, 103, 0.95), rgba(255, 115, 95, 0.88)) padding-box,
+    linear-gradient(120deg, rgba(255, 90, 103, 0.98), rgba(255, 115, 95, 0.92)) border-box;
+  background-clip: padding-box, border-box;
 }
 
 .mini-player__note {
