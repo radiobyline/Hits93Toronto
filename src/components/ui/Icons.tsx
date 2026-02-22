@@ -214,8 +214,14 @@ export function FacebookIcon(props: IconProps): JSX.Element {
 export function YouTubeIcon(props: IconProps): JSX.Element {
   return (
     <IconBase {...props}>
-      <rect x="3.2" y="6.3" width="17.6" height="11.4" rx="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M11 9.6l4.8 2.4-4.8 2.4z" fill="currentColor" />
+      <path
+        d="M20.6 8.5a2.8 2.8 0 00-2-2c-1.7-.5-6.6-.5-6.6-.5s-4.9 0-6.6.5a2.8 2.8 0 00-2 2C3 10.3 3 12 3 12s0 1.7.4 3.5a2.8 2.8 0 002 2c1.7.5 6.6.5 6.6.5s4.9 0 6.6-.5a2.8 2.8 0 002-2c.4-1.8.4-3.5.4-3.5s0-1.7-.4-3.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M10.4 9.3l5.1 2.7-5.1 2.7z" fill="currentColor" />
     </IconBase>
   );
 }
@@ -234,12 +240,25 @@ export function LinkedInIcon(props: IconProps): JSX.Element {
 export function SpotifyIcon(props: IconProps): JSX.Element {
   return (
     <IconBase {...props}>
-      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
       <path
-        d="M8 10.1c2.5-.8 5.4-.5 8 .8M8.7 13c2-.6 4.3-.4 6.3.7M9.4 15.7c1.4-.4 3-.3 4.3.4"
+        d="M6.4 9.3c3.3-1 7-0.6 10 .9"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7.3 12.4c2.5-.7 5.2-.4 7.5.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.1 15.2c1.8-.4 3.7-.2 5.3.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.65"
         strokeLinecap="round"
       />
     </IconBase>
@@ -250,13 +269,15 @@ export function AppleMusicIcon(props: IconProps): JSX.Element {
   return (
     <IconBase {...props}>
       <path
-        d="M14.8 5.2v8.8a2.7 2.7 0 11-1.6-2.5V7.1l6.1-1.3v7.1a2.7 2.7 0 11-1.6-2.5V4z"
+        d="M14 6.2v8.7a2.9 2.9 0 11-1.6-2.6V8.4l6.2-1.3v6.3a2.9 2.9 0 11-1.6-2.6V5.1z"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="9.6" cy="16.3" r="1.1" fill="currentColor" />
+      <circle cx="15.8" cy="14.9" r="1.1" fill="currentColor" />
     </IconBase>
   );
 }

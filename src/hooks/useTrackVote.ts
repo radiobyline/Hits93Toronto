@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { voteService } from "../services/voteService";
 import type { Track, VoteDirection } from "../types";
 
@@ -13,7 +13,6 @@ interface TrackVoteState {
 
 export function useTrackVote(track: Track | null): TrackVoteState {
   const [voteNote, setVoteNote] = useState("");
-  const [voteRevision, setVoteRevision] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const noteTimeoutRef = useRef<number | undefined>();
 
@@ -25,13 +24,11 @@ export function useTrackVote(track: Track | null): TrackVoteState {
     return `${track.allMusicId ?? track.key}:${track.startMs}`;
   }, [track]);
 
-  const currentVote = useMemo(() => {
-    if (!voteKey) {
-      return null;
-    }
-
-    return voteService.getVote(voteKey);
-  }, [voteKey, voteRevision]);
+  const currentVote = useSyncExternalStore(
+    voteService.subscribe,
+    () => (voteKey ? voteService.getVote(voteKey) : null),
+    () => null
+  );
 
   const canVote = Boolean(track?.allMusicId) && !currentVote && !isSubmitting;
 
@@ -69,18 +66,6 @@ export function useTrackVote(track: Track | null): TrackVoteState {
     };
   }, []);
 
-  useEffect(() => {
-    if (!voteKey) {
-      return;
-    }
-
-    return voteService.onVoteUpdated((updatedTrackKey) => {
-      if (updatedTrackKey === voteKey) {
-        setVoteRevision((previous) => previous + 1);
-      }
-    });
-  }, [voteKey]);
-
   const castVote = useCallback(
     (direction: VoteDirection) => {
       if (!voteKey || !track?.allMusicId) {
@@ -111,8 +96,6 @@ export function useTrackVote(track: Track | null): TrackVoteState {
           setIsSubmitting(false);
 
           if (result.accepted || voteService.getVote(voteKey)) {
-            // Recompute currentVote from session storage without showing a note.
-            setVoteRevision((previous) => previous + 1);
             showVoteNote("");
             return;
           }

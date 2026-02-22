@@ -1285,9 +1285,11 @@ h4 {
 }
 
 .recent-list__music-links {
+  width: 32px;
   display: grid;
   align-content: center;
   gap: 0.38rem;
+  justify-items: center;
 }
 
 .recent-list__music-link {
@@ -2467,8 +2469,8 @@ h4 {
   .recent-list__item {
     grid-template-columns: auto 64px minmax(0, 1fr);
     grid-template-areas:
-      "preview art links"
-      "preview meta links";
+      "preview art meta"
+      "preview links links";
     align-items: start;
   }
 
@@ -2489,6 +2491,13 @@ h4 {
 
   .recent-list__music-links {
     grid-area: links;
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 0.12rem;
   }
 
   .schedule-list__art-link {

@@ -3,6 +3,7 @@ import type { VoteDirection } from "../types";
 
 const VOTE_STORAGE_KEY = "hits93toronto:votes";
 const VOTE_UPDATED_EVENT = "hits93:vote-updated";
+const voteStoreListeners = new Set<() => void>();
 
 interface VoteMap {
   [trackKey: string]: VoteDirection;
@@ -40,6 +41,9 @@ function setVote(trackKey: string, direction: VoteDirection): void {
   const votes = readVotes();
   votes[trackKey] = direction;
   writeVotes(votes);
+  voteStoreListeners.forEach((listener) => {
+    listener();
+  });
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(
@@ -127,6 +131,13 @@ export const voteService = {
 
   async voteDown(trackKey: string, allMusicId: number): Promise<VoteResult> {
     return submitVote(trackKey, "down", allMusicId);
+  },
+
+  subscribe(listener: () => void): () => void {
+    voteStoreListeners.add(listener);
+    return () => {
+      voteStoreListeners.delete(listener);
+    };
   },
 
   onVoteUpdated(callback: (trackKey: string) => void): () => void {
