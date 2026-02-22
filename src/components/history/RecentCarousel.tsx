@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { DEFAULT_ARTWORK_URL } from "../../config/constants";
-import { handleTrackAddToAction } from "../../services/trackListActions";
 import type { Track } from "../../types";
 import { formatClock } from "../../utils/time";
 
@@ -40,18 +39,6 @@ export function RecentCarousel({ tracks }: RecentCarouselProps): JSX.Element {
               <h3>{track.title}</h3>
               <p>{track.artist}</p>
               <p className="recent-card__time">{formatClock(track.startMs)}</p>
-              <div className="recent-card__actions">
-                <button
-                  type="button"
-                  className="control-pill control-pill--small recent-card__add-to"
-                  onClick={() => {
-                    handleTrackAddToAction(track, "recent-carousel");
-                  }}
-                  title="Add to playlist/library options coming soon."
-                >
-                  Add To...
-                </button>
-              </div>
             </div>
           </article>
         ))}

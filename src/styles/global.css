@@ -998,15 +998,6 @@ h4 {
   gap: 0.22rem;
 }
 
-.recent-card__actions {
-  margin-top: 0.38rem;
-  display: flex;
-}
-
-.recent-card__add-to {
-  width: 100%;
-}
-
 .recent-card__meta h3,
 .recent-card__meta p {
   margin: 0;
@@ -1245,7 +1236,7 @@ h4 {
 
 .recent-list__item {
   display: grid;
-  grid-template-columns: auto 80px minmax(0, 1fr);
+  grid-template-columns: auto 80px minmax(0, 1fr) auto;
   gap: 0.75rem;
   padding: 0.65rem;
   border: 1px solid var(--surface-border);
@@ -1276,10 +1267,6 @@ h4 {
   justify-content: center;
 }
 
-.recent-list__add-to {
-  min-height: 34px;
-}
-
 .recent-list__item h3,
 .recent-list__item h4 {
   margin: 0;
@@ -1295,6 +1282,51 @@ h4 {
 
 .recent-list__time {
   font-size: 0.84rem;
+}
+
+.recent-list__music-links {
+  display: grid;
+  align-content: center;
+  gap: 0.38rem;
+}
+
+.recent-list__music-link {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.recent-list__music-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.recent-list__music-link:hover,
+.recent-list__music-link:focus-visible {
+  transform: translateY(-1px);
+}
+
+.recent-list__music-link--spotify {
+  border-color: rgba(30, 215, 96, 0.35);
+  background: linear-gradient(120deg, rgba(30, 215, 96, 0.13), rgba(30, 215, 96, 0.05));
+}
+
+.recent-list__music-link--apple {
+  border-color: rgba(255, 45, 85, 0.28);
+  background: linear-gradient(120deg, rgba(255, 45, 85, 0.12), rgba(255, 45, 85, 0.04));
+}
+
+.recent-list__music-link--youtube {
+  border-color: rgba(255, 0, 0, 0.28);
+  background: linear-gradient(120deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.03));
 }
 
 .recent-page__actions {
@@ -2430,6 +2462,33 @@ h4 {
 
   .schedule-list__item {
     grid-template-columns: 1fr;
+  }
+
+  .recent-list__item {
+    grid-template-columns: auto 64px minmax(0, 1fr);
+    grid-template-areas:
+      "preview art links"
+      "preview meta links";
+    align-items: start;
+  }
+
+  .recent-list__actions {
+    grid-area: preview;
+    align-self: center;
+  }
+
+  .recent-list__item img {
+    grid-area: art;
+    width: 64px;
+    height: 64px;
+  }
+
+  .recent-list__meta {
+    grid-area: meta;
+  }
+
+  .recent-list__music-links {
+    grid-area: links;
   }
 
   .schedule-list__art-link {

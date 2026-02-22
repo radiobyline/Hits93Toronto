@@ -230,3 +230,33 @@ export function LinkedInIcon(props: IconProps): JSX.Element {
     </IconBase>
   );
 }
+
+export function SpotifyIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M8 10.1c2.5-.8 5.4-.5 8 .8M8.7 13c2-.6 4.3-.4 6.3.7M9.4 15.7c1.4-.4 3-.3 4.3.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </IconBase>
+  );
+}
+
+export function AppleMusicIcon(props: IconProps): JSX.Element {
+  return (
+    <IconBase {...props}>
+      <path
+        d="M14.8 5.2v8.8a2.7 2.7 0 11-1.6-2.5V7.1l6.1-1.3v7.1a2.7 2.7 0 11-1.6-2.5V4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}

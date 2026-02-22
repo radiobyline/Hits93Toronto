@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_ARTWORK_URL, HISTORY_PAGE_SIZE } from "../config/constants";
-import { PlayIcon } from "../components/ui/Icons";
+import { AppleMusicIcon, PlayIcon, SpotifyIcon, YouTubeIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
-import { handleTrackAddToAction } from "../services/trackListActions";
 import { fetchHistory } from "../services/historyService";
 import type { Track } from "../types";
+import { buildTrackMusicLinks } from "../utils/musicLinks";
 import { formatClock } from "../utils/time";
 
 function dedupeTracks(tracks: Track[]): Track[] {
@@ -224,16 +224,6 @@ export function RecentPage(): JSX.Element {
                           : "Preview"}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    className="control-pill control-pill--small recent-list__add-to"
-                    onClick={() => {
-                      handleTrackAddToAction(row.track, "recent-page");
-                    }}
-                    title="Add to playlist/library options coming soon."
-                  >
-                    Add To...
-                  </button>
                 </div>
                 <img
                   src={row.track.artworkUrl}
@@ -243,10 +233,33 @@ export function RecentPage(): JSX.Element {
                     event.currentTarget.src = DEFAULT_ARTWORK_URL;
                   }}
                 />
-                <div>
+                <div className="recent-list__meta">
                   <h3>{row.track.title}</h3>
                   <p>{row.track.artist}</p>
                   <p className="recent-list__time">{formatClock(row.track.startMs)}</p>
+                </div>
+                <div className="recent-list__music-links" aria-label="Track links">
+                  {buildTrackMusicLinks(row.track).map((link) => {
+                    const Icon =
+                      link.service === "spotify"
+                        ? SpotifyIcon
+                        : link.service === "apple"
+                          ? AppleMusicIcon
+                          : YouTubeIcon;
+                    return (
+                      <a
+                        key={`${row.track.key}-${row.track.startMs}-${link.service}`}
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`recent-list__music-link recent-list__music-link--${link.service}`}
+                        aria-label={link.hint}
+                        title={link.hint}
+                      >
+                        <Icon />
+                      </a>
+                    );
+                  })}
                 </div>
               </article>
             );

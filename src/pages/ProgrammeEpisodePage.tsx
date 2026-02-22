@@ -5,13 +5,12 @@ import {
   EPISODE_LIVE_REFRESH_MS,
   SCHEDULE_EPISODE_LOOKBACK_DAYS
 } from "../config/constants";
-import { PlayIcon } from "../components/ui/Icons";
+import { AppleMusicIcon, PlayIcon, SpotifyIcon, YouTubeIcon } from "../components/ui/Icons";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
 import { fetchEpisodeArchiveTracks } from "../services/episodeArchiveService";
 import { fetchHistoryForWindow } from "../services/historyService";
 import { emitStopPreviews, onStopPreviews } from "../services/previewBus";
 import { fetchApplePreviewUrl } from "../services/previewService";
-import { handleTrackAddToAction } from "../services/trackListActions";
 import { exportEpisodePlaylistToAppleMusic, isAppleMusicConfigured } from "../services/appleMusicService";
 import type { Programme } from "../services/scheduleProvider";
 import { scheduleProvider } from "../services/scheduleService";
@@ -19,6 +18,7 @@ import { beginSpotifyLogin, getValidSpotifyAccessToken, isSpotifyConfigured } fr
 import { getProgrammeLongDescriptionBySlug } from "../services/programmeCatalog";
 import { exportEpisodePlaylistToSpotify, type SpotifyPlaylistExportResult } from "../services/spotifyPlaylistService";
 import type { Track } from "../types";
+import { buildTrackMusicLinks } from "../utils/musicLinks";
 import { formatIsoDateLocal, parseIsoDateLocal, resolveProgrammeSlug, shiftLocalDays } from "../utils/programme";
 import { formatClock } from "../utils/time";
 
@@ -690,16 +690,6 @@ export function ProgrammeEpisodePage(): JSX.Element {
                                 : "Preview"}
                           </span>
                         </button>
-                        <button
-                          type="button"
-                          className="control-pill control-pill--small recent-list__add-to"
-                          onClick={() => {
-                            handleTrackAddToAction(track, "programme-episode");
-                          }}
-                          title="Add to playlist/library options coming soon."
-                        >
-                          Add To...
-                        </button>
                       </div>
                       <img
                         src={track.artworkUrl}
@@ -709,10 +699,33 @@ export function ProgrammeEpisodePage(): JSX.Element {
                           event.currentTarget.src = DEFAULT_ARTWORK_URL;
                         }}
                       />
-                      <div>
+                      <div className="recent-list__meta">
                         <h4>{track.title}</h4>
                         <p>{track.artist}</p>
                         {timeLabel && <p className="recent-list__time">{timeLabel}</p>}
+                      </div>
+                      <div className="recent-list__music-links" aria-label="Track links">
+                        {buildTrackMusicLinks(track).map((link) => {
+                          const Icon =
+                            link.service === "spotify"
+                              ? SpotifyIcon
+                              : link.service === "apple"
+                                ? AppleMusicIcon
+                                : YouTubeIcon;
+                          return (
+                            <a
+                              key={`${track.key}-${track.startMs}-${link.service}`}
+                              href={link.href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`recent-list__music-link recent-list__music-link--${link.service}`}
+                              aria-label={link.hint}
+                              title={link.hint}
+                            >
+                              <Icon />
+                            </a>
+                          );
+                        })}
                       </div>
                     </article>
                   );

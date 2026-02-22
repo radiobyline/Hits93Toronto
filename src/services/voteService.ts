@@ -2,6 +2,7 @@ import { buildApiUrl } from "./apiClient";
 import type { VoteDirection } from "../types";
 
 const VOTE_STORAGE_KEY = "hits93toronto:votes";
+const VOTE_UPDATED_EVENT = "hits93:vote-updated";
 
 interface VoteMap {
   [trackKey: string]: VoteDirection;
@@ -39,6 +40,14 @@ function setVote(trackKey: string, direction: VoteDirection): void {
   const votes = readVotes();
   votes[trackKey] = direction;
   writeVotes(votes);
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(VOTE_UPDATED_EVENT, {
+        detail: { trackKey, direction }
+      })
+    );
+  }
 }
 
 function formatVoteResultMessage(payload: VoteApiResponse): string {
@@ -118,5 +127,21 @@ export const voteService = {
 
   async voteDown(trackKey: string, allMusicId: number): Promise<VoteResult> {
     return submitVote(trackKey, "down", allMusicId);
+  },
+
+  onVoteUpdated(callback: (trackKey: string) => void): () => void {
+    if (typeof window === "undefined") {
+      return () => undefined;
+    }
+
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<{ trackKey?: string }>;
+      callback(customEvent.detail?.trackKey ?? "");
+    };
+
+    window.addEventListener(VOTE_UPDATED_EVENT, handler as EventListener);
+    return () => {
+      window.removeEventListener(VOTE_UPDATED_EVENT, handler as EventListener);
+    };
   }
 };

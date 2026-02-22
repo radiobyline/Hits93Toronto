@@ -1,15 +1,8 @@
-import { getTrackSearchQuery } from "../../utils/track";
+import { buildTrackMusicLinks } from "../../utils/musicLinks";
 import type { Track } from "../../types";
 
 interface MusicLinksProps {
   track: Track | null;
-}
-
-interface ServiceLink {
-  href: string;
-  label: string;
-  hint: string;
-  className: string;
 }
 
 export function MusicLinks({ track }: MusicLinksProps): JSX.Element {
@@ -21,32 +14,18 @@ export function MusicLinks({ track }: MusicLinksProps): JSX.Element {
     );
   }
 
-  const query = encodeURIComponent(getTrackSearchQuery(track));
-  const links: ServiceLink[] = [
-    {
-      href: `https://open.spotify.com/search/${query}`,
-      label: "Spotify",
-      hint: "Add to Spotify",
-      className: "music-link music-link--spotify"
-    },
-    {
-      href: `https://music.apple.com/us/search?term=${query}`,
-      label: "Apple Music",
-      hint: "Open in Apple Music",
-      className: "music-link music-link--apple"
-    },
-    {
-      href: `https://www.youtube.com/results?search_query=${query}`,
-      label: "YouTube",
-      hint: "Watch on YouTube",
-      className: "music-link music-link--youtube"
-    }
-  ];
+  const links = buildTrackMusicLinks(track);
 
   return (
     <div className="music-links">
       {links.map((link) => (
-        <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className={link.className}>
+        <a
+          key={link.label}
+          href={link.href}
+          target="_blank"
+          rel="noreferrer"
+          className={`music-link music-link--${link.service}`}
+        >
           <span className="music-link__service">{link.label}</span>
           <span className="music-link__hint">{link.hint}</span>
         </a>

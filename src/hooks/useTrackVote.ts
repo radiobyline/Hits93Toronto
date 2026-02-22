@@ -69,6 +69,18 @@ export function useTrackVote(track: Track | null): TrackVoteState {
     };
   }, []);
 
+  useEffect(() => {
+    if (!voteKey) {
+      return;
+    }
+
+    return voteService.onVoteUpdated((updatedTrackKey) => {
+      if (updatedTrackKey === voteKey) {
+        setVoteRevision((previous) => previous + 1);
+      }
+    });
+  }, [voteKey]);
+
   const castVote = useCallback(
     (direction: VoteDirection) => {
       if (!voteKey || !track?.allMusicId) {
