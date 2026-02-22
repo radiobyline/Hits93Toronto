@@ -1,0 +1,15 @@
+name = "hits93-episode-archive"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+SC_API_BASE = "https://hits93toronto.com:2490/api/v2"
+SERVER_ID = "1"
+# ARCHIVE_ADMIN_TOKEN = "replace-me"
+
+[[kv_namespaces]]
+binding = "EPISODE_ARCHIVE"
+id = "replace-with-kv-id"
+
+[triggers]
+crons = ["*/15 * * * *"]

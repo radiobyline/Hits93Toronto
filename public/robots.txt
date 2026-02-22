@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hits93.com/sitemap.xml
