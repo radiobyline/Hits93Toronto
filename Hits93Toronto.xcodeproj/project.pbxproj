@@ -10,9 +10,22 @@
 		77EBD38C2F3E6C4D00646C03 /* Hits93Toronto.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hits93Toronto.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		77EBD3F42F3E6D4A00646C03 /* Exceptions for "Hits93Toronto" folder in "Hits93Toronto" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 77EBD38B2F3E6C4D00646C03 /* Hits93Toronto */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		77EBD38E2F3E6C4D00646C03 /* Hits93Toronto */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				77EBD3F42F3E6D4A00646C03 /* Exceptions for "Hits93Toronto" folder in "Hits93Toronto" target */,
+			);
 			path = Hits93Toronto;
 			sourceTree = "<group>";
 		};
@@ -256,6 +269,9 @@
 				DEVELOPMENT_TEAM = Y8Z98FU539;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hits93Toronto/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hits 93 Toronto";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +304,9 @@
 				DEVELOPMENT_TEAM = Y8Z98FU539;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hits93Toronto/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hits 93 Toronto";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
