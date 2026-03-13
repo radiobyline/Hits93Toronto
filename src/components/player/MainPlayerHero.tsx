@@ -4,6 +4,7 @@ import { DEFAULT_ARTWORK_URL } from "../../config/constants";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
 import { useTrackVote } from "../../hooks/useTrackVote";
 import type { Programme } from "../../services/scheduleProvider";
+import { SponsorBanner } from "../ads/SponsorBanner";
 import { RecentCarousel } from "../history/RecentCarousel";
 import { RequestModal } from "../requests/RequestModal";
 import { ProgrammeBlock } from "../schedule/ProgrammeBlock";
@@ -194,6 +195,9 @@ export function MainPlayerHero({ rootRef, miniPlayerSentinelRef }: MainPlayerHer
         </div>
 
         <RecentCarousel tracks={recentTracks.slice(0, 5)} />
+        <div className="sponsor-slot sponsor-slot--home">
+          <SponsorBanner />
+        </div>
         <div ref={miniPlayerSentinelRef} className="mini-player-sentinel" aria-hidden="true" />
         <ProgrammeBlock onProgrammeChange={onProgrammeChange} />
         <div className="mini-player-sentinel" aria-hidden="true" />
