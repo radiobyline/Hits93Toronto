@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { SponsorBanner } from "../ads/SponsorBanner";
 import { useTheme } from "../../hooks/useTheme";
 import { SpotifyAuthHandler } from "../auth/SpotifyAuthHandler";
 import { MiniPlayer } from "../player/MiniPlayer";
@@ -26,11 +25,6 @@ export function AppShell(): JSX.Element {
       >
         <Outlet />
       </main>
-      {!isHomeRoute && (
-        <div className="container sponsor-slot sponsor-slot--shell">
-          <SponsorBanner />
-        </div>
-      )}
       <Footer withMiniPlayer={showMiniPlayer} />
       {showMiniPlayer && <MiniPlayer />}
     </div>
